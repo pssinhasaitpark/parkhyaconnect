@@ -1,8 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Home from './pages/home/Home';  // Correct the import if needed
-import Signup from './pages/auth/signup/Signup';  // Correct the path if needed
-import Login from './pages/auth/login/Login';  // Correct the path if needed
+import Home from './pages/home/Home'; 
+import Signup from './pages/auth/signup/Signup';  
+import Login from './pages/auth/login/Login';  
+import Dashboard from './pages/dashboard/Dashboard';
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
         <Route path="/" element={<Home/>} />
         <Route path="/signup" element={<Signup/>} />
         <Route path="/login" element={<Login/>} />
+        <Route path="/dashboard" element={<Dashboard/>} />
       </Routes>
     </Router>
   );
