@@ -14,9 +14,9 @@ const Dashboard = () => {
         <Header />
 
         {/* Main Content */}
-        <Box sx={{ p: 3 }}> 
+        <Box sx={{ p: 3 }}>
           {/* Add your page content here */}
-          <h1 >Dashboard Content</h1>
+          <h1>Dashboard Content</h1>
         </Box>
       </Box>
     </Box>
