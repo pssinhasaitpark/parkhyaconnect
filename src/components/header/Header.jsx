@@ -27,7 +27,7 @@ const Header = () => {
 
         {/* Slack Pro Trial Button */}
         <Button variant="contained" color="secondary" sx={{ ml: 2, backgroundColor: "#9146ff" }}>
-          Slack Pro trial
+          Slack Pro 
         </Button>
 
         {/* Help Button */}
