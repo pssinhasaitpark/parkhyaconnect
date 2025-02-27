@@ -1,15 +1,22 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import axios from 'axios';
 import { Box, Typography, TextField, Button, Card, InputAdornment } from '@mui/material';
 import { Email, Lock, Person, Phone } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import parkhyalogo from '../../../assets/images/parkhyalogo.png';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Signup = () => {
+  const navigate = useNavigate(); // Create a navigate instance
+
   const validationSchema = Yup.object({
     fullName: Yup.string().required('Full Name is required'),
     mobileNumber: Yup.string()
-      .matches(/^(\\+\d{1,2}\s?)?(\d{10})$/, 'Enter a valid mobile number')
+      .matches(/^(?:\+?\d{1,3}[- ]?)?\d{10}$/, 'Enter a valid mobile number') // Updated regex for mobile number
       .required('Mobile Number is required'),
     email: Yup.string().email('Enter a valid email').required('Email is required'),
     password: Yup.string()
@@ -25,9 +32,29 @@ const Signup = () => {
       password: '',
     },
     validationSchema,
+    validateOnChange: true, // Validate fields on change
     onSubmit: (values) => {
-      console.log('Sign-up successful', values);
-      // Handle API submission here
+      axios.post('http://192.168.0.152:8000/api/auth/register', values)
+        .then(response => {
+          localStorage.setItem('token', response.data.data.token);
+          toast.success('Registration successful! Redirecting to dashboard...');
+          navigate('/dashboard'); // Navigate after successful registration
+          console.log('User registered successfully', response.data);
+        })
+        .catch(error => {
+          console.error('There was an error registering!', error); 
+          if (!error.response) {
+            toast.error('Network error. Please check your connection.'); // Show network error toast
+          }
+          console.log('Error response:', error.response); // Log the error response to see its structure
+          if (error.response && error.response.data.message === 'User already exists') {
+            formik.setFieldError('email', 'User already exists'); // Set email field error
+            formik.setTouched({ email: true }); // Mark email field as touched
+            toast.error('Registration failed. User already exists.'); // Show error toast
+          } else {
+            toast.error('Registration failed. Please try again.'); // Show generic error toast
+          }
+        });
     },
   });
 
@@ -42,6 +69,9 @@ const Signup = () => {
       style={{
         background: 'linear-gradient(135deg, #4A154B, #3D63A2, #36B3A0)',
         backgroundSize: 'cover',
+        overflow: 'hidden',
+        height: '100vh',
+      
       }}
     >
       <Card
@@ -84,7 +114,11 @@ const Signup = () => {
               fullWidth
               id={field}
               name={field}
-              label={field === 'fullName' ? 'Full Name' : field === 'mobileNumber' ? 'Mobile Number' : field === 'email' ? 'Email Address' : 'Password'}
+              label={
+                field === 'fullName' ? 'Full Name' :
+                field === 'mobileNumber' ? 'Mobile Number' :
+                field === 'email' ? 'Email Address' : 'Password'
+              }
               variant="outlined"
               type={field === 'password' ? 'password' : 'text'}
               value={formik.values[field]}
@@ -137,6 +171,7 @@ const Signup = () => {
           </Typography>
         </Box>
       </Card>
+      <ToastContainer /> {/* Add ToastContainer for notifications */}
     </Box>
   );
 };
