@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 import { Box, Typography, TextField, Button, Card, InputAdornment, IconButton } from '@mui/material';
 import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useFormik } from 'formik';
@@ -10,6 +14,7 @@ import parkhyalogo from '../../../assets/images/parkhyalogo.png';
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const validationSchema = Yup.object({
     email: Yup.string().email('Enter a valid email').required('Email is required'),
@@ -23,8 +28,21 @@ const Login = () => {
     },
     validationSchema,
     onSubmit: (values) => {
-      console.log('Login successful', values);
-      navigate('/dashboard');
+      axios.post('http://192.168.0.152:8000/api/auth/login', values)
+        .then(response => {
+          login(response.data.token); // Set the user as authenticated and save the token
+          toast.success('Login successful!');
+          navigate('/dashboard');
+        })
+        .catch(error => {
+          if (!error.response) {
+            toast.error('Network error. Please check your connection.');
+          } else if (error.response.status === 401) {
+            toast.error('Login failed. Please check your credentials.');
+          } else {
+            toast.error('Login failed. Please try again.');
+          }
+        });
     },
   });
 
@@ -39,6 +57,9 @@ const Login = () => {
       style={{
         background: 'linear-gradient(135deg, #4A154B, #3D63A2, #36B3A0)',
         backgroundSize: 'cover',
+        overflow: 'hidden',
+        height: '100vh',
+        
       }}
     >
       <Card
@@ -51,6 +72,7 @@ const Login = () => {
           backgroundColor: 'white',
         }}
       >
+        <ToastContainer /> {/* Add ToastContainer for notifications */}
         <Box display="flex" justifyContent="center" marginBottom={3}>
           <img
             src={parkhyalogo}
@@ -135,9 +157,14 @@ const Login = () => {
           <GoogleLogin
             onSuccess={(response) => {
               console.log('Google Login Success:', response);
+              login(); // Set the user as authenticated
+              toast.success('Login successful!'); // Show success toast
               navigate('/dashboard');
             }}
-            onError={() => console.log('Google Login Failed')}
+            onError={() => {
+              console.log('Google Login Failed');
+              toast.error('Google Login failed. Please try again.');
+            }}
             useOneTap
           />
         </Box>
