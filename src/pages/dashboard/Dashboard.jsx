@@ -5,19 +5,19 @@ import { Box } from "@mui/material";
 
 const Dashboard = () => {
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
-      {/* Sidebar */}
-      <Sidebar />
-
-      <Box sx={{ flexGrow: 1 }}>
-        {/* Header */}
+    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Fixed Header */}
+      <Box sx={{ position: "fixed", top: 0, width: "100%", zIndex: 1000 }}>
         <Header />
+      </Box>
+
+      {/* Sidebar & Content Wrapper */}
+      <Box sx={{ display: "flex", flexGrow: 1, marginTop: "64px" }}> {/* Push below Header */}
+        {/* Sidebar */}
+        <Sidebar />
 
         {/* Main Content */}
-        <Box sx={{ p: 3 }}>
-          {/* Add your page content here */}
-          <h1>Dashboard Content</h1>
-        </Box>
+        
       </Box>
     </Box>
   );

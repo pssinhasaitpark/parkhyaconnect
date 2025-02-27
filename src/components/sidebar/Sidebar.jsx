@@ -1,12 +1,41 @@
 import React, { useState } from "react";
-import { Drawer, List, ListItem, ListItemIcon, IconButton, Box   } from "@mui/material";
-import { Home, ChatBubble, Notifications, MoreHoriz, AddCircle, AccountCircle } from "@mui/icons-material";
+import { Drawer, List, ListItem, ListItemIcon, ListItemText, Box, IconButton, Avatar, Popover } from "@mui/material";
+import { HomeOutlined, ChatBubbleOutline, NotificationsNone, MoreHoriz, Add, Person } from "@mui/icons-material";
+import HomeComponent from "../subSection/Home";
+import DMsComponent from "../subSection/DMs";
+import ActivityComponent from "../subSection/Activity";
+import MoreComponent from "../subSection/More";
 
 const Sidebar = () => {
-  const [subSliderOpen, setSubSliderOpen] = useState(false);
+  const [selectedSection, setSelectedSection] = useState("Home");
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
+  const [moreAnchorEl, setMoreAnchorEl] = useState(null);
 
-  const toggleSubSlider = (open) => () => {
-    setSubSliderOpen(open);
+  const handleSectionClick = (section) => {
+    if (section === "More") {
+      return;
+    }
+    setSelectedSection(section);
+    setMobilePanelOpen(true);
+  };
+
+  const handleMoreClick = (event) => {
+    setMoreAnchorEl(event.currentTarget);
+  };
+
+  const handleMoreClose = () => {
+    setMoreAnchorEl(null);
+  };
+
+  const renderSection = () => {
+    switch (selectedSection) {
+      case "DMs":
+        return <DMsComponent />;
+      case "Activity":
+        return <ActivityComponent />;
+      default:
+        return <HomeComponent />;
+    }
   };
 
   return (
@@ -25,115 +54,119 @@ const Sidebar = () => {
             alignItems: "center",
             paddingTop: 2,
             borderRight: "none",
+            height: "calc(100vh - 70px)",
+            marginTop: "70px",
           },
         }}
       >
-        {/* Logo/Icon at Top */}
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            bgcolor: "gray",
-            borderRadius: 2,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <span style={{ fontSize: "12px", fontWeight: "bold" }}>PS</span>
+        {/* Profile Avatar */}
+        <Box sx={{ textAlign: "center", mb: 3 }}>
+          <Avatar sx={{ bgcolor: "#aaa", color: "black" }}>PS</Avatar>
         </Box>
 
         {/* Navigation Icons */}
         <List sx={{ width: "100%" }}>
-          <ListItem button sx={{ justifyContent: "center" }}>
-            <ListItemIcon sx={{ color: "white", minWidth: "auto" }}>
-              <Home />
-            </ListItemIcon>
-          </ListItem>
-          <ListItem button sx={{ justifyContent: "center" }}>
-            <ListItemIcon sx={{ color: "white", minWidth: "auto" }}>
-              {/* <Badge badgeContent={7} color="error"> */}
-                <ChatBubble />
-              {/* </Badge> */}
-            </ListItemIcon>
-          </ListItem>
-          <ListItem button sx={{ justifyContent: "center" }}>
-            <ListItemIcon sx={{ color: "white", minWidth: "auto" }}>
-              <Notifications />
-            </ListItemIcon>
-          </ListItem>
-          <ListItem button sx={{ justifyContent: "center" }} onClick={toggleSubSlider(true)}>
-            <ListItemIcon sx={{ color: "white", minWidth: "auto" }}>
+          {[{ label: "Home", icon: <HomeOutlined /> }, { label: "DMs", icon: <ChatBubbleOutline /> }, { label: "Activity", icon: <NotificationsNone /> }].map((item) => (
+            <ListItem
+              button
+              key={item.label}
+              sx={{
+                flexDirection: "column",
+                alignItems: "center",
+                bgcolor: selectedSection === item.label ? "#57315a" : "transparent",
+                mb: 2,
+              }}
+              onClick={() => handleSectionClick(item.label)}
+            >
+              <ListItemIcon sx={{ color: "white", minWidth: "auto", mb: 1, mr: 0.5 }}>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.label} sx={{ color: "white", fontSize: "0.75rem", mt: -0.5 }} />
+            </ListItem>
+          ))}
+          
+          {/* More Button */}
+          <ListItem
+            button
+            sx={{ flexDirection: "column", alignItems: "center", mb: 2 }}
+            onClick={handleMoreClick}
+          >
+            <ListItemIcon sx={{ color: "white", minWidth: "auto", mb: 0, mr: 0.5 }}>
               <MoreHoriz />
             </ListItemIcon>
+            <ListItemText primary="More" sx={{ color: "white", fontSize: "0.75rem", mt: -0.5 }} />
           </ListItem>
         </List>
 
-        {/* Spacer to push buttons to bottom */}
-        <Box sx={{ flexGrow: 1 }} />
-
-        {/* Floating Add Button */}
-        <IconButton sx={{ color: "white", mb: 2 }}>
-          <AddCircle fontSize="large" />
-        </IconButton>
-
-        {/* Profile Icon */}
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            bgcolor: "white",
-            borderRadius: 2,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            position: "relative",
-            mb: 2,
-          }}
-        >
-          <AccountCircle sx={{ color: "gold", fontSize: 32 }} />
-          <Box
+        {/* Bottom Icons */}
+        <Box sx={{ textAlign: "center", mt: "auto", mb: 2 }}>
+          <IconButton
             sx={{
-              width: 10,
-              height: 10,
-              bgcolor: "green",
               borderRadius: "50%",
-              position: "absolute",
-              bottom: 2,
-              right: 2,
-              border: "2px solid white",
+              color: "white",
+              p: 1,
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 0.1)",
+              },
             }}
-          />
+          >
+            <Add fontSize="large" />
+          </IconButton>
+          <IconButton
+            sx={{
+              color: "white",
+              mt: 1,
+              borderRadius: "50%",
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 0.1)",
+              },
+            }}
+          >
+            <Person fontSize="large" />
+          </IconButton>
         </Box>
       </Drawer>
 
-      {/* Sub-Slider */}
-      <Drawer
-        anchor="left"
-        open={subSliderOpen}
-        onClose={toggleSubSlider(false)}
+      {/* Sub-Section Panel */}
+      <Box
         sx={{
-          "& .MuiDrawer-paper": {
-            width: 200,
-            bgcolor: "#3E014F",
+          width: 320,
+          height: "100vh",
+          bgcolor: "#290b2c",
+          color: "white",
+          position: "fixed",
+          left: 72,
+          padding: 2,
+          transition: "all 0.3s ease-in-out",
+          display: { xs: mobilePanelOpen ? "block" : "none", sm: "block" },
+        }}
+      >
+        {renderSection()}
+      </Box>
+
+      {/* More Popup */}
+      <Popover
+        open={Boolean(moreAnchorEl)}
+        anchorEl={moreAnchorEl}
+        onClose={handleMoreClose}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+        sx={{
+          "& .MuiPaper-root": {
+            bgcolor: "#290b2c",
             color: "white",
+            padding: 2,
+            borderRadius: "8px",
+            boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.2)",
           },
         }}
       >
-        <List>
-          <ListItem button>
-            <ListItemIcon sx={{ color: "white" }}>
-              <Home />
-            </ListItemIcon>
-          </ListItem>
-          <ListItem button>
-            <ListItemIcon sx={{ color: "white" }}>
-              <ChatBubble />
-            </ListItemIcon>
-          </ListItem>
-        </List>
-      </Drawer>
+        <MoreComponent />
+      </Popover>
     </>
   );
 };
