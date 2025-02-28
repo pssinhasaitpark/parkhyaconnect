@@ -1,15 +1,28 @@
 import React, { useState } from 'react';
-import { Card, Button, Form } from 'react-bootstrap';
-import { Box, Typography } from '@mui/material';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, TextField, Button, Card } from '@mui/material';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setMessage('Password reset link has been sent to your email.');
-    // Handle password reset logic here
+    axios.post('http://192.168.0.152:8000/api/auth/forgot-password', { email })
+      .then(response => {
+        toast.success('Password reset link sent to your email!');
+        // navigate('/reset-password'); // Redirect to login page after sending the reset link
+      })
+      .catch(error => {
+        if (!error.response) {
+          toast.error('Network error. Please check your connection.');
+        } else {
+          toast.error('Failed to send reset link. Please try again.');
+        }
+      });
   };
 
   return (
@@ -23,10 +36,12 @@ const ForgotPassword = () => {
       style={{
         background: 'linear-gradient(135deg, #4A154B, #3D63A2, #36B3A0)',
         backgroundSize: 'cover',
+        overflow: 'hidden',
+        height: '100vh',
       }}
     >
       <Card
-        style={{
+        sx={{
           width: '100%',
           maxWidth: '560px',
           padding: '30px',
@@ -35,51 +50,56 @@ const ForgotPassword = () => {
           backgroundColor: 'white',
         }}
       >
-        <Card.Body>
-          {/* Logo Section */}
-          <Box display="flex" justifyContent="center" marginBottom={3}>
-            <img
-              src="/path/to/logo.png"
-              alt="ParkhyaConnect Logo"
-              style={{ width: '150px', objectFit: 'contain' }}
-            />
-          </Box>
+        <ToastContainer />
+        <Box textAlign="center" marginBottom={3}>
+          <Typography variant="h5" gutterBottom>
+            Forgot Password
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Enter your email to receive a reset link
+          </Typography>
+        </Box>
 
-          {/* Title */}
-          <Box textAlign="center" marginBottom={3}>
-            <Typography variant="h5" gutterBottom>
-              Forgot Your Password?
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Enter your email to receive a password reset link.
-            </Typography>
-          </Box>
-
-          {/* Forgot Password Form */}
-          <Form onSubmit={handleSubmit}>
-            <Form.Group controlId="formBasicEmail" className="mb-3">
-              <Form.Label>Email address</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </Form.Group>
-
-            <Button variant="primary" type="submit" style={{ width: '100%' }}>
-              Send Password Reset Link
-            </Button>
-          </Form>
-
-          {message && (
-            <Box display="flex" justifyContent="center" marginTop={3}>
-              <Typography variant="body2" color="textSecondary">
-                {message}
-              </Typography>
-            </Box>
-          )}
-        </Card.Body>
+        <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            id="email"
+            name="email"
+            label="Email Address"
+            variant="outlined"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+          <Button
+            fullWidth
+            variant="contained"
+            type="submit"
+            size="large"
+            sx={{
+              mt: 2,
+              mb: 3,
+              py: 1.5,
+              fontWeight: 'bold',
+              borderRadius: 2,
+              background: 'linear-gradient(90deg, #4A154B 0%, #3D63A2 100%)',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #3D1240 0%, #335490 100%)',
+              },
+              textTransform: 'none',
+            }}
+          >
+            Send Reset Link
+          </Button>
+          <Button
+            fullWidth
+            variant="text"
+            onClick={() => navigate('/login')}
+            sx={{ textTransform: 'none' }}
+          >
+            Back to Login
+          </Button>
+        </form>
       </Card>
     </Box>
   );
