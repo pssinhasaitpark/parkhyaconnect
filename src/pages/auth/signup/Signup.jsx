@@ -38,7 +38,7 @@ const Signup = () => {
         .then(response => {
           localStorage.setItem('token', response.data.data.token);
           toast.success('Registration successful! Redirecting to dashboard...');
-          navigate('/dashboard'); // Navigate after successful registration
+          navigate('/login'); // Navigate to login page after successful registration
           console.log('User registered successfully', response.data);
         })
         .catch(error => {

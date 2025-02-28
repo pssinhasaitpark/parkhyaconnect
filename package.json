@@ -13,6 +13,9 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^13.5.0",
+    "@tiptap/extension-mention": "^2.11.5",
+    "@tiptap/react": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
     "axios": "^1.8.1",
     "formik": "^2.4.6",
     "react": "^19.0.0",
@@ -21,6 +24,7 @@
     "react-router-dom": "^7.2.0",
     "react-scripts": "5.0.1",
     "react-toastify": "^11.0.5",
+    "socket.io-client": "^4.8.1",
     "web-vitals": "^2.1.4",
     "yup": "^1.6.1"
   },

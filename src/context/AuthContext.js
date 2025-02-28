@@ -9,12 +9,14 @@ const AuthContext = createContext({
 });
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
+  const [token, setToken] = useState(localStorage.getItem('token') || '');
 
   const login = (newToken) => {
-    setIsAuthenticated(true);
-    saveToken(newToken); // Save the token
+    if (newToken) {
+      setIsAuthenticated(true);
+      saveToken(newToken); // Save the token
+    }
   };
 
   const logout = () => {
