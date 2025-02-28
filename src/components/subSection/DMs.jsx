@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { Search, Edit } from "@mui/icons-material";
 
-const DMs = () => {
+const DMs = ({ onUserSelect }) => {
   const [showUnread, setShowUnread] = useState(false);
 
   const users = [
@@ -28,7 +28,7 @@ const DMs = () => {
     { name: "Hank", message: "Let's catch up", time: "6:50 AM", unread: 0, online: true, avatar: "" },
     { name: "Ivy", message: "See you at 5", time: "5:25 AM", unread: 1, online: false, avatar: "" },
     { name: "Jack", message: "Lunch at noon?", time: "4:10 AM", unread: 0, online: false, avatar: "" },
-    { name: "Admin", message: "System update complete", time: "3:00 AM", unread: 0, online: false, avatar: "https://via.placeholder.com/40" }, 
+    { name: "Admin", message: "System update complete", time: "3:00 AM", unread: 0, online: false, avatar: "https://via.placeholder.com/40" },
   ];
 
   return (
@@ -90,7 +90,9 @@ const DMs = () => {
                 display: showUnread && user.unread === 0 ? "none" : "flex",
                 alignItems: "center",
               }}
+              onClick={() => onUserSelect(user)} // Trigger user selection
             >
+              {/* Avatar with Online Status */}
               <ListItemAvatar>
                 <Badge
                   variant="dot"
@@ -101,19 +103,31 @@ const DMs = () => {
                   <Avatar src={user.avatar}>{user.avatar ? "" : user.name[0]}</Avatar>
                 </Badge>
               </ListItemAvatar>
+
+              {/* Name & Message */}
               <ListItemText
-                primary={<Typography fontWeight={user.unread > 0 ? "bold" : "normal"}>{user.name}</Typography>}
+                primary={
+                  <Typography fontWeight={user.unread > 0 ? "bold" : "normal"}>
+                    {user.name}
+                  </Typography>
+                }
                 secondary={user.message}
                 sx={{ color: "#ccc" }}
               />
-              {user.unread > 0 && (
-                <Badge badgeContent={user.unread} color="error" sx={{ marginRight: "8px" }} />
-              )}
-              {user.time && (
-                <Typography variant="caption" sx={{ color: "#999" }}>
+
+              {/* Time & Unread Badge */}
+              <Box display="flex" flexDirection="column" alignItems="flex-end">
+                <Typography variant="caption" sx={{ color: "#999", mb: 0.3 }}>
                   {user.time}
                 </Typography>
-              )}
+                {user.unread > 0 && (
+                  <Badge
+                    badgeContent={user.unread}
+                    color="error"
+                    sx={{ mt: 0.8, mr: -0.5 }}
+                  />
+                )}
+              </Box>
             </ListItem>
           ))}
         </List>

@@ -5,11 +5,12 @@ import HomeComponent from "../subSection/Home";
 import DMsComponent from "../subSection/DMs";
 import ActivityComponent from "../subSection/Activity";
 import MoreComponent from "../subSection/More";
-
-const Sidebar = () => {
+import UserMenu from "../subSection/UserMenu"; // Import UserMenu
+const Sidebar = ({ onUserSelect }) => {
   const [selectedSection, setSelectedSection] = useState("Home");
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [moreAnchorEl, setMoreAnchorEl] = useState(null);
+  const [userAnchorEl, setUserAnchorEl] = useState(null); // State for UserMenu
 
   const handleSectionClick = (section) => {
     if (section === "More") {
@@ -18,7 +19,6 @@ const Sidebar = () => {
     setSelectedSection(section);
     setMobilePanelOpen(true);
   };
-
   const handleMoreClick = (event) => {
     setMoreAnchorEl(event.currentTarget);
   };
@@ -27,14 +27,22 @@ const Sidebar = () => {
     setMoreAnchorEl(null);
   };
 
+  const handleUserClick = (event) => {
+    setUserAnchorEl(event.currentTarget); // Open UserMenu
+  };
+
+  const handleUserClose = () => {
+    setUserAnchorEl(null); // Close UserMenu
+  };
+
   const renderSection = () => {
     switch (selectedSection) {
       case "DMs":
-        return <DMsComponent />;
+        return <DMsComponent onUserSelect={onUserSelect} />;
       case "Activity":
         return <ActivityComponent />;
       default:
-        return <HomeComponent />;
+        return <HomeComponent onUserSelect={onUserSelect} />;
     }
   };
 
@@ -66,7 +74,11 @@ const Sidebar = () => {
 
         {/* Navigation Icons */}
         <List sx={{ width: "100%" }}>
-          {[{ label: "Home", icon: <HomeOutlined /> }, { label: "DMs", icon: <ChatBubbleOutline /> }, { label: "Activity", icon: <NotificationsNone /> }].map((item) => (
+          {[
+            { label: "Home", icon: <HomeOutlined /> },
+            { label: "DMs", icon: <ChatBubbleOutline /> },
+            { label: "Activity", icon: <NotificationsNone /> },
+          ].map((item) => (
             <ListItem
               button
               key={item.label}
@@ -82,7 +94,7 @@ const Sidebar = () => {
               <ListItemText primary={item.label} sx={{ color: "white", fontSize: "0.75rem", mt: -0.5 }} />
             </ListItem>
           ))}
-          
+
           {/* More Button */}
           <ListItem
             button
@@ -119,6 +131,7 @@ const Sidebar = () => {
                 bgcolor: "rgba(255, 255, 255, 0.1)",
               },
             }}
+            onClick={handleUserClick} // Open UserMenu
           >
             <Person fontSize="large" />
           </IconButton>
@@ -167,6 +180,7 @@ const Sidebar = () => {
       >
         <MoreComponent />
       </Popover>
+      <UserMenu anchorEl={userAnchorEl} onClose={handleUserClose} />
     </>
   );
 };

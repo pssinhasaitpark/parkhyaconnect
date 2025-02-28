@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, List, ListItem, ListItemIcon, ListItemText, Collapse, Typography, Avatar } from "@mui/material";
 import { ExpandLess, ExpandMore, Add } from "@mui/icons-material";
 
-const Home = () => {
+const Home = ({ onUserSelect }) => {
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
 
@@ -75,7 +75,7 @@ const Home = () => {
         <Collapse in={dmsOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {users.map((user) => (
-              <ListItem button key={user.name} sx={{ pl: 2 }}>
+              <ListItem button key={user.name} sx={{ pl: 2 }} onClick={() => onUserSelect(user)}>
                 <ListItemIcon>
                   <Avatar sx={{ width: 24, height: 24 }}>{user.name[0]}</Avatar>
                 </ListItemIcon>
