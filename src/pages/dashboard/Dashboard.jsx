@@ -1,19 +1,15 @@
-import React from "react";
-import { Button, Box } from "@mui/material";
-import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import Header from "../../components/header/Header";
 import Sidebar from "../../components/sidebar/Sidebar";
-import { Navigate } from "react-router-dom";
-import Chatbox from "../../components/chatbox";
+import { Box } from "@mui/material";
+import ChatUI from "../../components/ChatBox/ChatUI";
 
 const Dashboard = () => {
-  const { isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
+  const [selectedUser, setSelectedUser] = useState(null);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/auth/login" />;
-  }
+  const handleUserSelect = (user) => {
+    setSelectedUser(user);
+  };
 
   return (
     <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
@@ -22,25 +18,17 @@ const Dashboard = () => {
         <Header />
       </Box>
 
-      {/* Sidebar & Content Wrapper */}
-      <Button 
-        variant="contained" 
-        color="primary" 
-        onClick={() => {
-          logout();
-          navigate('/auth/login');
-        }}
-      >
-        Logout
-      </Button>
+      {/* Sidebar & Main Content */}
+      <Box sx={{ display: "flex", flexGrow: 1, marginTop: "64px", height: "calc(100vh - 64px)" }}>
+        {/* Sidebar - Left */}
+        <Sidebar onUserSelect={handleUserSelect} />
 
-      <Box sx={{ display: "flex", flexGrow: 1, marginTop: "64px" }}> {/* Push below Header */}
-        {/* Sidebar */}
-        <Sidebar />
-
-        {/* Main Content */}
-      <Chatbox/>
-        
+        {/* Chat UI - Conditionally Rendered */}
+        {selectedUser && (
+          <Box sx={{ flexGrow: 1, height: "100%", display: "flex", paddingLeft: "18%" }}>
+            <ChatUI user={selectedUser} />
+          </Box>
+        )}
       </Box>
     </Box>
   );
