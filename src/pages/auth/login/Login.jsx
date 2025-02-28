@@ -153,6 +153,23 @@ const Login = () => {
           </Button>
         </form>
 
+        <Button
+          fullWidth
+          variant="outlined"
+          color="primary" // Change color to primary for better visibility
+          onClick={() => navigate('/forgot-password')}
+          sx={{
+            mt: 2,
+            mb: 3,
+            py: 1.5,
+            fontWeight: 'bold',
+            borderRadius: 2,
+            borderColor: '#4A154B', // Optional: Add a border color for distinction
+          }}
+        >
+          Forgot Password?
+        </Button>
+
         <Box display="flex" justifyContent="center" my={2}>
           <GoogleLogin
             onSuccess={(response) => {

@@ -10,6 +10,8 @@ import Home from "./pages/home/Home";
 import Signup from "./pages/auth/signup/Signup";
 import Login from "./pages/auth/login/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
+import ResetPassword from "./pages/auth/ResetPassword"; // Importing ResetPassword component
+import ForgotPassword from "./pages/auth/ForgotPassword";
 
 function App() {
   return (
@@ -18,7 +20,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<LoginWrapper />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} /> {/* Accessible without authentication */}
           <Route path="/dashboard" element={<DashboardWrapper />} />
         </Routes>
       </Router>
@@ -33,7 +37,7 @@ const LoginWrapper = () => {
 
 const DashboardWrapper = () => {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Dashboard /> : <Navigate to="/login" />;
+  return isAuthenticated ? <Dashboard /> : <Navigate to="/auth/login" />;
 };
 
 export default App;
