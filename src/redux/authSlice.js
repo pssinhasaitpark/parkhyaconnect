@@ -14,19 +14,29 @@ const initialState = {
   error: null,
 };
 
-// Login Thunk
+/// Login Thunk
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (credentials, { rejectWithValue }) => {
     try {
+      console.log("API request payload:", credentials); // Debugging log
       const response = await axios.post(
         `${API_BASE_URL}/auth/login`,
         credentials
       );
-      localStorage.setItem("token", response.data.token);
+      // If the login is successful, store the token in localStorage
+      if (response?.data?.token) {
+        localStorage.setItem("token", response.data.token);
+      }
+      console.log("API response:", response.data); // Debugging log
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Login failed");
+      // Improved error handling for network issues
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Login failed due to an unexpected error.";
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -42,10 +52,16 @@ export const signupUser = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Signup failed");
+      // Improved error handling for network issues
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Signup failed due to an unexpected error.";
+      return rejectWithValue(errorMessage);
     }
   }
 );
+
 
 // Fetch Users Thunk
 export const fetchUsers = createAsyncThunk(
@@ -59,6 +75,7 @@ export const fetchUsers = createAsyncThunk(
 
       // Extract only necessary fields
       const filteredUsers = response.data.data.users.map((user) => ({
+        isOnline: user.isOnline, // Ensure isOnline status is included
         id: user.id,
         fullName: user.fullName,
         avatar: user.avatar,

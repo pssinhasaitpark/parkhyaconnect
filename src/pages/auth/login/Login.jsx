@@ -1,78 +1,79 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../context/AuthContext';
+import { loginUser } from '../../../redux/authSlice';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import { Box, Typography, TextField, Button, Card, InputAdornment, IconButton } from '@mui/material';
 import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { GoogleLogin } from '@react-oauth/google';
-import parkhyalogo from '../../../assets/images/parkhyalogo.png';
+import parkhyalogo from '../../../assets/parkhyalogo.png';
 
 const Login = () => {
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const dispatch = useDispatch();
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const [showPassword, setShowPassword] = React.useState(false);
 
+  // Validation schema using Yup
   const validationSchema = Yup.object({
     email: Yup.string().email('Enter a valid email').required('Email is required'),
     password: Yup.string().min(8, 'Password should be at least 8 characters').required('Password is required'),
   });
 
+  // Formik setup for handling form data and submission
   const formik = useFormik({
     initialValues: {
       email: '',
       password: '',
     },
     validationSchema,
-    onSubmit: (values) => {
-      axios.post('http://192.168.0.152:8000/api/auth/login', values)
-        .then(response => {
-          login(response.data.token); // Set the user as authenticated and save the token
-          toast.success('Login successful!');
-          navigate('/dashboard');
-        })
-        .catch(error => {
-          if (!error.response) {
-            toast.error('Network error. Please check your connection.');
-          } else if (error.response.status === 401) {
-            toast.error('Login failed. Please check your credentials.');
-          } else {
-            toast.error('Login failed. Please try again.');
-          }
-        });
-    },
+    onSubmit: async (values) => {
+        console.log("Login attempt with values:", values); // Debugging log
+
+  try {
+    const resultAction = await dispatch(loginUser({ email: values.email, password: values.password }));
+
+    if (loginUser.fulfilled.match(resultAction)) {
+      console.log("Login successful, response:", resultAction); // Debugging log
+      toast.success('Login successful!');
+      navigate('/dashboard'); // Navigate only on success
+    } else {
+      toast.error(resultAction.payload || 'Invalid email or password');
+    }
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Login failed. Please try again.');
+  }
+},
+
   });
 
-  return (
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard'); // Redirect to dashboard if authenticated
+    }
+  }, [isAuthenticated, navigate]);
+
+  return ( 
     <Box
       display="flex"
       justifyContent="center"
       alignItems="center"
       minHeight="100vh"
       bgcolor="transparent"
-      padding={2}
-      style={{
+      sx={{
         background: 'linear-gradient(135deg, #4A154B, #3D63A2, #36B3A0)',
         backgroundSize: 'cover',
-        overflow: 'hidden',
         height: '100vh',
-        
+        padding: 2,
       }}
     >
-      <Card
-        sx={{
-          width: '100%',
-          maxWidth: '560px',
-          padding: '30px',
-          borderRadius: '12px',
-          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-          backgroundColor: 'white',
-        }}
-      >
-        <ToastContainer /> {/* Add ToastContainer for notifications */}
+      <Card sx={{ width: '100%', maxWidth: '560px', padding: 3, borderRadius: '12px', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
+        <ToastContainer /> {/* Toast notifications */}
+
         <Box display="flex" justifyContent="center" marginBottom={3}>
           <img
             src={parkhyalogo}
@@ -88,12 +89,8 @@ const Login = () => {
         </Box>
 
         <Box textAlign="center" marginBottom={3}>
-          <Typography variant="h5" gutterBottom>
-            Welcome Back
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Sign in to continue
-          </Typography>
+          <Typography variant="h5" gutterBottom>Welcome Back</Typography>
+          <Typography variant="body2" color="textSecondary">Sign in to continue</Typography>
         </Box>
 
         <form onSubmit={formik.handleSubmit}>
@@ -156,7 +153,7 @@ const Login = () => {
         <Button
           fullWidth
           variant="outlined"
-          color="primary" // Change color to primary for better visibility
+          color="primary"
           onClick={() => navigate('/forgot-password')}
           sx={{
             mt: 2,
@@ -164,7 +161,7 @@ const Login = () => {
             py: 1.5,
             fontWeight: 'bold',
             borderRadius: 2,
-            borderColor: '#4A154B', // Optional: Add a border color for distinction
+            borderColor: '#4A154B',
           }}
         >
           Forgot Password?
@@ -172,16 +169,13 @@ const Login = () => {
 
         <Box display="flex" justifyContent="center" my={2}>
           <GoogleLogin
-            onSuccess={(response) => {
-              console.log('Google Login Success:', response);
-              login(); // Set the user as authenticated
-              toast.success('Login successful!'); // Show success toast
+            onSuccess={async (response) => {
+              const token = response.credential;
+              localStorage.setItem('token', token); // Save token
+              toast.success('Login successful!');
               navigate('/dashboard');
             }}
-            onError={() => {
-              console.log('Google Login Failed');
-              toast.error('Google Login failed. Please try again.');
-            }}
+            onError={() => toast.error('Google Login failed. Please try again.')}
             useOneTap
           />
         </Box>

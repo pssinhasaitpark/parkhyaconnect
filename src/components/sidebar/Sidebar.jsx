@@ -6,7 +6,11 @@ import DMsComponent from "../subSection/DMs";
 import ActivityComponent from "../subSection/Activity";
 import MoreComponent from "../subSection/More";
 import UserMenu from "../subSection/UserMenu"; // Import UserMenu
+import { useSelector } from "react-redux"; // Import useSelector
+
 const Sidebar = ({ onUserSelect }) => {
+  
+  const selectedUser = useSelector((state) => state.auth.selectedUser); // Retrieve selectedUser from Redux state
   const [selectedSection, setSelectedSection] = useState("Home");
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [moreAnchorEl, setMoreAnchorEl] = useState(null);
@@ -72,7 +76,9 @@ const Sidebar = ({ onUserSelect }) => {
           <Avatar sx={{ bgcolor: "#aaa", color: "black" }}>PS</Avatar>
         </Box>
 
-        {/* Navigation Icons */}
+        {/* User List Removed */}
+
+      {/* Navigation Icons */}
         <List sx={{ width: "100%" }}>
           {[
             { label: "Home", icon: <HomeOutlined /> },
@@ -180,7 +186,7 @@ const Sidebar = ({ onUserSelect }) => {
       >
         <MoreComponent />
       </Popover>
-      <UserMenu anchorEl={userAnchorEl} onClose={handleUserClose} />
+      <UserMenu anchorEl={userAnchorEl} onClose={handleUserClose} selectedUser={selectedUser} />
     </>
   );
 };

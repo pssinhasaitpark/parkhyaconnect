@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import Header from "../../components/header/Header";
 import Sidebar from "../../components/sidebar/Sidebar";
 import { Box } from "@mui/material";
@@ -6,6 +7,7 @@ import ChatUI from "../../components/ChatBox/ChatUI";
 
 const Dashboard = () => {
   const [selectedUser, setSelectedUser] = useState(null);
+  const currentUser = useSelector((state) => state.auth.user);
 
   const handleUserSelect = (user) => {
     setSelectedUser(user);
@@ -26,7 +28,7 @@ const Dashboard = () => {
         {/* Chat UI - Conditionally Rendered */}
         {selectedUser && (
           <Box sx={{ flexGrow: 1, height: "100%", display: "flex", paddingLeft: "18%" }}>
-            <ChatUI user={selectedUser} />
+            <ChatUI user={selectedUser} currentUser={currentUser} />
           </Box>
         )}
       </Box>
