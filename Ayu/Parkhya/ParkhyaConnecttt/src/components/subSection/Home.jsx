@@ -1,26 +1,34 @@
-import React, { useState } from "react";
-import { Box, List, ListItem, ListItemIcon, ListItemText, Collapse, Typography, Avatar } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUsers } from "../../redux/authSlice"; // Assuming you have a fetchUsers action
+import {
+  Box,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Collapse,
+  Typography,
+  Avatar,
+  Badge,
+} from "@mui/material";
 import { ExpandLess, ExpandMore, Add } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 const Home = ({ onUserSelect }) => {
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
+  const [selectUser, setSelectUser] = useState(null)
 
-  // Randomized user names with random notifications
-  const users = [
-    { name: "Alice Johnson", notifications: Math.floor(Math.random() * 5) },
-    { name: "Bob Smith", notifications: Math.floor(Math.random() * 5) },
-    { name: "Charlie Williams", notifications: Math.floor(Math.random() * 5) },
-    { name: "David Lee", notifications: Math.floor(Math.random() * 5) },
-    { name: "Emma Brown", notifications: Math.floor(Math.random() * 5) },
-    { name: "Frank White", notifications: Math.floor(Math.random() * 5) },
-    { name: "Grace Harris", notifications: Math.floor(Math.random() * 5) },
-    { name: "Hannah Clark", notifications: Math.floor(Math.random() * 5) },
-    { name: "Ivy King", notifications: Math.floor(Math.random() * 5) },
-    { name: "Jack Moore", notifications: Math.floor(Math.random() * 5) },
-  ];
+  const navigate = useNavigate()
 
-  // Randomized channel names
+  const dispatch = useDispatch();
+  const { users, loading } = useSelector((state) => state.auth); // Default users as empty array
+
+  useEffect(() => {
+    dispatch(fetchUsers()); // Fetch users on component mount
+  }, [dispatch]);
+
   const channels = [
     "team-alpha",
     "marketing-updates",
@@ -28,6 +36,10 @@ const Home = ({ onUserSelect }) => {
     "dev-discussions",
     "product-ideas",
   ];
+
+
+
+
 
   return (
     <Box
@@ -74,31 +86,77 @@ const Home = ({ onUserSelect }) => {
         </ListItem>
         <Collapse in={dmsOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            {users.map((user) => (
-              <ListItem button key={user.name} sx={{ pl: 2 }} onClick={() => onUserSelect(user)}>
-                <ListItemIcon>
-                  <Avatar sx={{ width: 24, height: 24 }}>{user.name[0]}</Avatar>
-                </ListItemIcon>
-                <ListItemText primary={user.name} />
-                {user.notifications > 0 && (
-                  <Box
-                    sx={{
-                      bgcolor: "red",
-                      color: "white",
-                      borderRadius: "50%",
-                      width: 20,
-                      height: 20,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {user.notifications}
-                  </Box>
-                )}
-              </ListItem>
-            ))}
+            {/* Loading State */}
+
+            {loading ? (
+              <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
+                Loading users...
+              </Typography>
+            ) : // Render users dynamically from Redux state if users is an array
+
+              Array.isArray(users) && users.length > 0 && users ? (users.map((user) => (
+                <ListItem
+                  button
+                  key={user.id}
+                  sx={{ pl: 2 }}
+                  onClick={() => {
+                    if (user.fullName === "Rajhveer Joshi") {
+                      window.location.href = `/chat/rajhveer-joshi`;
+                    } else {
+                      onUserSelect(user);
+                    }
+                  }}
+                >
+                  <ListItemIcon>
+                    <Avatar sx={{ width: 24, height: 24 }}>
+                      {user.fullName && user.fullName.trim() !== ""
+                        ? user.fullName[0]
+                        : "?"}{" "}
+                      {/* Display first letter of the name or a placeholder */}
+                    </Avatar>
+                  </ListItemIcon>
+                  <ListItemText primary={user.fullName && user.fullName.trim()}
+                  // onClick={() => navigate(`/chat/${user.fullName}`)}
+                  />
+                  {user.isOnline && (
+                    <Box
+                      sx={{
+                        bgcolor: "green",
+                        borderRadius: "50%",
+                        width: 10,
+                        height: 10,
+                        position: "absolute",
+                        right: 10,
+                        top: 10,
+                      }}
+                    />
+                  )}
+                  {user.notifications > 0 && (
+                    <Box
+                      sx={{
+                        bgcolor: "red",
+                        color: "white",
+                        borderRadius: "50%",
+                        width: 20,
+                        height: 20,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "12px",
+                      }}
+                    >
+                      {user.notifications}
+                    </Box>
+                  )}
+                </ListItem>
+              ))
+              ) : (
+                <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
+                  No users found.
+                </Typography>
+              )}
+
+            {/* Add Colleague Section */}
             <ListItem button sx={{ pl: 2 }}>
               <ListItemIcon>
                 <Add sx={{ color: "white" }} />
