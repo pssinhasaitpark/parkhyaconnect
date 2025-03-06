@@ -15,53 +15,64 @@ const Header = () => {
 
   return (
     <>
-      <AppBar position="static" sx={{ backgroundColor: "#401d42", padding: "5px" }}>
-        <Toolbar>
-          {/* Back & Forward Buttons */}
-          <IconButton color="inherit">
-            <ArrowBack />
-          </IconButton>
-          <IconButton color="inherit">
-            <ArrowForward />
-          </IconButton>
+     <AppBar 
+  position="fixed" 
+  sx={{ 
+    backgroundColor: "#401d42", 
+    width: "100%", 
+    left: 0, 
+    top: 0, 
+    zIndex: 1100, // Ensure it appears above everything 
+  }}
+>
+  <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    {/* Left Section - Back & Forward Buttons */}
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <IconButton color="inherit">
+        <ArrowBack />
+      </IconButton>
+      <IconButton color="inherit">
+        <ArrowForward />
+      </IconButton>
+    </Box>
 
-          {/* Search Bar */}
-          <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center", mx: 2, backgroundColor: "#5a2a68", borderRadius: 2, paddingX: 2 }}>
-            <Search sx={{ color: "#fff", mr: 1 }} />
-            <InputBase placeholder="Search..." sx={{ color: "white", flex: 1 }} />
-          </Box>
+    {/* Center - Search Bar */}
+    <Box 
+      sx={{ 
+        flexGrow: 1, 
+        maxWidth: "500px", 
+        display: "flex", 
+        alignItems: "center", 
+        backgroundColor: "#5a2a68", 
+        borderRadius: 2, 
+        paddingX: 2 
+      }}
+    >
+      <Search sx={{ color: "#fff", mr: 1 }} />
+      <InputBase placeholder="Search..." sx={{ color: "white", flex: 1 }} />
+    </Box>
 
-          {/* Time Icon */}
-          <IconButton color="inherit">
-            <AccessTime />
-          </IconButton>
+    {/* Right Section - Time Icon, Buttons, Help */}
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <IconButton color="inherit">
+        <AccessTime />
+      </IconButton>
 
-          {/* Slack Pro Trial Button */}
-          <Button 
-            variant="contained" 
-            color="secondary" 
-            sx={{ ml: 2, backgroundColor: "#9146ff" }} 
-            onClick={() => setOpen(true)}
-          >
-            Slack Pro 
-          </Button>
+      <Button variant="contained" sx={{ backgroundColor: "#9146ff" }} onClick={() => setOpen(true)}>
+        Slack Pro
+      </Button>
 
-          {/* Logout Button */}
-          <Button 
-            variant="contained" 
-            color="secondary" 
-            sx={{ ml: 2, backgroundColor: "#9146ff" }} 
-            onClick={handleLogout} // Call handleLogout on click
-          >
-            Logout
-          </Button>
+      <Button variant="contained" sx={{ backgroundColor: "#9146ff" }} onClick={handleLogout}>
+        Logout
+      </Button>
 
-          {/* Help Button */}
-          <IconButton color="inherit">
-            <QuestionMark />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
+      <IconButton color="inherit">
+        <QuestionMark />
+      </IconButton>
+    </Box>
+  </Toolbar>
+</AppBar>
+
 
       {/* Slack Pro Popup Component */}
       <SlackProPopup open={open} handleClose={() => setOpen(false)} />
