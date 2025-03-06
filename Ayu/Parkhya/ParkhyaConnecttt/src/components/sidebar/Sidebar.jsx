@@ -56,7 +56,7 @@ const Sidebar = ({ onUserSelect }) => {
       <Drawer
         variant="permanent"
         sx={{
-          width: 72,
+          width: 81,
           "& .MuiDrawer-paper": {
             width: 72,
             bgcolor: "#401d42",
@@ -67,7 +67,7 @@ const Sidebar = ({ onUserSelect }) => {
             paddingTop: 2,
             borderRight: "none",
             height: "calc(100vh - 70px)",
-            marginTop: "70px",
+            marginTop: "60px",
           },
         }}
       >

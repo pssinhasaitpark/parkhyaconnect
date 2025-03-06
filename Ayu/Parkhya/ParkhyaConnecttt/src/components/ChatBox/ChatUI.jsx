@@ -68,7 +68,7 @@ const SlackChatUI = () => {
           display: 'flex',
           flexDirection: 'column',
           height: '100vh',
-          width: '77vw',
+          width: '79vw',
           backgroundColor: theme.palette.background.default
         }}
       >
@@ -77,7 +77,7 @@ const SlackChatUI = () => {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            p: 2,
+            p: 3,
             borderBottom: '1px solid rgba(255,255,255,0.12)'
           }}
         >
@@ -102,7 +102,7 @@ const SlackChatUI = () => {
           sx={{
             flexGrow: 1,
             overflowY: 'auto',
-            p: 2,
+            p: 3,
             backgroundColor: theme.palette.background.paper
           }}
         >

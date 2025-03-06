@@ -19,13 +19,13 @@ const Dashboard = () => {
       </Box>
 
       {/* Sidebar & Main Content */}
-      <Box sx={{ display: "flex", flexGrow: 1, marginTop: "64px", height: "calc(100vh - 64px)" }}>
+      <Box sx={{ display: "flex", flexGrow: 1, marginTop: "55px", height: "calc(100vh - 64px)" }}>
         {/* Sidebar - Left */}
         <Sidebar onUserSelect={handleUserSelect} />
 
         {/* Chat UI - Conditionally Rendered */}
         {selectedUser && (
-          <Box sx={{ flexGrow: 1, height: "100%", display: "flex", paddingLeft: "18%" }}>
+          <Box sx={{ flexGrow: 1, height: "100%", display: "flex", paddingLeft: "17%" }}>
             <ChatUI user={selectedUser} />
           </Box>
         )}

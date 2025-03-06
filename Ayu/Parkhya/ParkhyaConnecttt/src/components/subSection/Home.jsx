@@ -10,23 +10,35 @@ import {
   Collapse,
   Typography,
   Avatar,
-  Badge,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Switch,
+  Button,
 } from "@mui/material";
 import { ExpandLess, ExpandMore, Add } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 const Home = ({ onUserSelect }) => {
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
-  const [selectUser, setSelectUser] = useState(null)
+  // const [selectUser, setSelectUser] = useState(null);
+  const [openAddChannel, setOpenAddChannel] = useState(false);
+  const [channelData, setChannelData] = useState({
+    name: "",
+    description: "",
+    isPrivate: false,
+  });
 
-  const navigate = useNavigate()
+  // const navigate = useNavigate();
 
   const dispatch = useDispatch();
-  const { users, loading } = useSelector((state) => state.auth); // Default users as empty array
+  const { users, loading } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    dispatch(fetchUsers()); // Fetch users on component mount
+    dispatch(fetchUsers());
   }, [dispatch]);
 
   const channels = [
@@ -37,9 +49,13 @@ const Home = ({ onUserSelect }) => {
     "product-ideas",
   ];
 
+  const handleOpenAddChannel = () => setOpenAddChannel(true);
+  const handleCloseAddChannel = () => setOpenAddChannel(false);
 
-
-
+  const handleCreateChannel = () => {
+    console.log("Creating Channel:", channelData);
+    handleCloseAddChannel();
+  };
 
   return (
     <Box
@@ -68,7 +84,7 @@ const Home = ({ onUserSelect }) => {
                 <ListItemText primary={`# ${channel}`} />
               </ListItem>
             ))}
-            <ListItem button sx={{ pl: 2 }}>
+            <ListItem button sx={{ pl: 2 }} onClick={handleOpenAddChannel}>
               <ListItemIcon>
                 <Add sx={{ color: "white" }} />
               </ListItemIcon>
@@ -86,15 +102,13 @@ const Home = ({ onUserSelect }) => {
         </ListItem>
         <Collapse in={dmsOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            {/* Loading State */}
-
             {loading ? (
               <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
                 Loading users...
               </Typography>
-            ) : // Render users dynamically from Redux state if users is an array
-
-              Array.isArray(users) && users.length > 0 && users ? (users.map((user) => (
+            ) :
+            Array.isArray(users) && users.length > 0 ? (
+              users.map((user) => (
                 <ListItem
                   button
                   key={user.id}
@@ -111,52 +125,17 @@ const Home = ({ onUserSelect }) => {
                     <Avatar sx={{ width: 24, height: 24 }}>
                       {user.fullName && user.fullName.trim() !== ""
                         ? user.fullName[0]
-                        : "?"}{" "}
-                      {/* Display first letter of the name or a placeholder */}
+                        : "?"} 
                     </Avatar>
                   </ListItemIcon>
-                  <ListItemText primary={user.fullName && user.fullName.trim()}
-                  // onClick={() => navigate(`/chat/${user.fullName}`)}
-                  />
-                  {user.isOnline && (
-                    <Box
-                      sx={{
-                        bgcolor: "green",
-                        borderRadius: "50%",
-                        width: 10,
-                        height: 10,
-                        position: "absolute",
-                        right: 10,
-                        top: 10,
-                      }}
-                    />
-                  )}
-                  {user.notifications > 0 && (
-                    <Box
-                      sx={{
-                        bgcolor: "red",
-                        color: "white",
-                        borderRadius: "50%",
-                        width: 20,
-                        height: 20,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {user.notifications}
-                    </Box>
-                  )}
+                  <ListItemText primary={user.fullName && user.fullName.trim()} />
                 </ListItem>
               ))
-              ) : (
-                <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
-                  No users found.
-                </Typography>
-              )}
-
-            {/* Add Colleague Section */}
+            ) : (
+              <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
+                No users found.
+              </Typography>
+            )}
             <ListItem button sx={{ pl: 2 }}>
               <ListItemIcon>
                 <Add sx={{ color: "white" }} />
@@ -166,6 +145,46 @@ const Home = ({ onUserSelect }) => {
           </List>
         </Collapse>
       </List>
+
+      {/* Add Channel Dialog */}
+      <Dialog open={openAddChannel} onClose={handleCloseAddChannel}>
+        <DialogTitle>Add New Channel</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Channel Name"
+            fullWidth
+            margin="dense"
+            value={channelData.name}
+            onChange={(e) =>
+              setChannelData({ ...channelData, name: e.target.value })
+            }
+          />
+          <TextField
+            label="Description"
+            fullWidth
+            margin="dense"
+            value={channelData.description}
+            onChange={(e) =>
+              setChannelData({ ...channelData, description: e.target.value })
+            }
+          />
+          <Box display="flex" alignItems="center" mt={2}>
+            <Typography>Private</Typography>
+            <Switch
+              checked={channelData.isPrivate}
+              onChange={(e) =>
+                setChannelData({ ...channelData, isPrivate: e.target.checked })
+              }
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAddChannel}>Cancel</Button>
+          <Button onClick={handleCreateChannel} variant="contained" color="primary">
+            Create Channel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
