@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { forgotPassword } from '../../redux/authSlice';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, TextField, Button, Card } from '@mui/material';
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const navigate = useNavigate(); // Create a navigate instance
 
-  const handleSubmit = (e) => {
+  const [email, setEmail] = useState(''); // Declare email state
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    axios.post('http://192.168.0.152:8000/api/auth/forgot-password', { email })
-      .then(response => {
+    try {
+      const resultAction = await dispatch(forgotPassword(email)); // Dispatch forgot password action
+      if (forgotPassword.fulfilled.match(resultAction)) {
         toast.success('Password reset link sent to your email!');
-        // navigate('/reset-password'); // Redirect to login page after sending the reset link
-      })
-      .catch(error => {
-        if (!error.response) {
-          toast.error('Network error. Please check your connection.');
-        } else {
-          toast.error('Failed to send reset link. Please try again.');
-        }
-      });
+      }
+    } catch (error) {
+      if (!error.response) {
+        toast.error('Network error. Please check your connection.');
+      } else {
+        toast.error('Failed to send reset link. Please try again.');
+      }
+    }
   };
 
   return (

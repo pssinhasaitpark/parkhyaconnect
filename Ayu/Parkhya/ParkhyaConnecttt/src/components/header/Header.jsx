@@ -1,9 +1,16 @@
 import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { logout } from "../../redux/authSlice"; // Import the logout action
 import { AppBar, Toolbar, InputBase, Box, Button, IconButton } from "@mui/material";
 import { Search, QuestionMark, ArrowBack, ArrowForward, AccessTime } from "@mui/icons-material";
 import SlackProPopup from "../subSection/ProVersion"; // Import the Popup Component
 
 const Header = () => {
+  const dispatch = useDispatch(); // Initialize dispatch
+
+  const handleLogout = () => {
+    dispatch(logout()); // Dispatch the logout action
+  };
   const [open, setOpen] = useState(false);
 
   return (
@@ -37,6 +44,16 @@ const Header = () => {
             onClick={() => setOpen(true)}
           >
             Slack Pro 
+          </Button>
+
+          {/* Logout Button */}
+          <Button 
+            variant="contained" 
+            color="secondary" 
+            sx={{ ml: 2, backgroundColor: "#9146ff" }} 
+            onClick={handleLogout} // Call handleLogout on click
+          >
+            Logout
           </Button>
 
           {/* Help Button */}

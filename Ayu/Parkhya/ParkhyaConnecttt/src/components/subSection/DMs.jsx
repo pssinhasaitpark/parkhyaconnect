@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUsers, fetchSelectedUser } from "../../redux/authSlice";
 import {
   Box,
   Typography,
@@ -11,127 +13,190 @@ import {
   IconButton,
   Badge,
   Switch,
+  Divider,
+  CircularProgress
 } from "@mui/material";
-import { Search, Edit } from "@mui/icons-material";
+import { Search, Edit, Send } from "@mui/icons-material";
 
-const DMs = ({ onUserSelect }) => {
+const DMs = () => {
   const [showUnread, setShowUnread] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  // Removed local state for selectedUser as it is managed in Redux
 
-  const users = [
-    { name: "Alice", message: "See you soon!", time: "2:30 PM", unread: 2, online: true, avatar: "" },
-    { name: "Bob", message: "Let's meet up", time: "1:45 PM", unread: 0, online: false, avatar: "" },
-    { name: "Charlie", message: "Check your email", time: "12:10 PM", unread: 1, online: true, avatar: "" },
-    { name: "David", message: "Good morning!", time: "10:05 AM", unread: 0, online: true, avatar: "" },
-    { name: "Eve", message: "Are you coming?", time: "9:30 AM", unread: 3, online: false, avatar: "" },
-    { name: "Frank", message: "Call me later", time: "8:20 AM", unread: 0, online: false, avatar: "" },
-    { name: "Grace", message: "Meeting rescheduled", time: "7:15 AM", unread: 2, online: true, avatar: "" },
-    { name: "Hank", message: "Let's catch up", time: "6:50 AM", unread: 0, online: true, avatar: "" },
-    { name: "Ivy", message: "See you at 5", time: "5:25 AM", unread: 1, online: false, avatar: "" },
-    { name: "Jack", message: "Lunch at noon?", time: "4:10 AM", unread: 0, online: false, avatar: "" },
-    { name: "Admin", message: "System update complete", time: "3:00 AM", unread: 0, online: false, avatar: "https://via.placeholder.com/40" },
-  ];
+  const [newMessage, setNewMessage] = useState("");  // Track the new message input
+
+  const dispatch = useDispatch();
+  const { users, loading, error, selectedUser } = useSelector((state) => state.auth);
+  const errorMessage = error ? <Typography sx={{ color: 'red', textAlign: 'center' }}>{error}</Typography> : null;
+
+  const { messages } = useSelector((state) => state.messages);
+
+  useEffect(() => {
+    dispatch(fetchUsers());  // Fetch users on component mount
+  }, [dispatch]);
+
+  // Handle user selection from the sidebar
+  const handleUserSelect = async (user) => {
+    const userDetail = await dispatch(fetchSelectedUser(user.id)).unwrap();
+  };
+
+  // Filter users based on the search query
+  const filteredUsers = (users || []).filter(user =>
+    user.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Handle sending a new message
+  const handleSendMessage = () => {
+    if (newMessage.trim() !== "") {
+      // Dispatch the message to be sent to the selected user
+      dispatch(sendMessage({ content: newMessage, receiverId: selectedUser.id }));
+      setNewMessage("");  // Clear the message input
+    }
+  };
+
+
+
 
   return (
-    <Box
-      sx={{
-        maxWidth: 320, // Sidebar width
-        height: "100vh",
-        bgcolor: "#290b2c",
-        color: "white",
-        padding: 2,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Fixed Header */}
-      <Box sx={{ position: "sticky", top: 0, bgcolor: "#290b2c", zIndex: 10, pb: 2 }}>
-        {/* Header */}
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h6">Direct Messages</Typography>
-          <IconButton sx={{ color: "white" }}>
-            <Edit />
-          </IconButton>
-        </Box>
-
-        {/* Search Input */}
-        <Box display="flex" alignItems="center" bgcolor="#3b1e3d" borderRadius="4px" padding="4px" mt={1} mb={1}>
-          <Search sx={{ color: "#aaa", marginRight: 1 }} />
-          <TextField
-            variant="standard"
-            placeholder="Find a DM"
-            fullWidth
-            InputProps={{ disableUnderline: true, style: { color: "white" } }}
-          />
-        </Box>
-
-        {/* Unread Messages Toggle */}
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="body2">Unread messages</Typography>
-          <Switch checked={showUnread} onChange={() => setShowUnread(!showUnread)} />
-        </Box>
-      </Box>
-
-      {/* Scrollable List (with hidden scrollbar) */}
+    <Box sx={{ display: "flex", height: "100vh" }}>
+      {/* Sidebar */}
       <Box
         sx={{
-          flex: 1,
-          overflowY: "auto",
-          scrollbarWidth: "none", // Hide scrollbar for Firefox
-          "&::-webkit-scrollbar": { display: "none" }, // Hide scrollbar for Chrome/Safari
+          width: 320,
+          bgcolor: "#290b2c",
+          color: "white",
+          display: "flex",
+          flexDirection: "column",
+          padding: 2,
         }}
       >
-        <List>
-          {users.map((user, index) => (
-            <ListItem
-              key={index}
-              button
-              sx={{
-                borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-                display: showUnread && user.unread === 0 ? "none" : "flex",
-                alignItems: "center",
+        {/* Fixed Header */}
+        <Box sx={{ position: "sticky", top: 0, zIndex: 10, pb: 2 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6">Direct Messages</Typography>
+            <IconButton sx={{ color: "white" }}>
+              <Edit />
+            </IconButton>
+          </Box>
+          <Box
+            display="flex"
+            alignItems="center"
+            bgcolor="#3b1e3d"
+            borderRadius="4px"
+            padding="4px"
+            mt={1}
+            mb={1}
+          >
+            <Search sx={{ color: "#aaa", marginRight: 1 }} />
+            <TextField
+              variant="standard"
+              placeholder="Find a DM"
+              fullWidth
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                disableUnderline: true,
+                style: { color: "white" },
               }}
-              onClick={() => onUserSelect(user)} // Trigger user selection
-            >
-              {/* Avatar with Online Status */}
-              <ListItemAvatar>
-                <Badge
-                  variant="dot"
-                  color={user.online ? "success" : "default"}
-                  overlap="circular"
-                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            />
+          </Box>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Typography variant="body2">Unread messages</Typography>
+            <Switch
+              checked={showUnread}
+              onChange={() => setShowUnread(!showUnread)}
+            />
+          </Box>
+        </Box>
+
+        {errorMessage}
+        <Divider sx={{ bgcolor: "#3b1e3d", my: 2 }} />
+
+        {/* Scrollable User List */}
+        <Box sx={{ overflowY: "auto", flex: 1 }}>
+       
+          <List>
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
+                <ListItem
+                  key={user.id}
+                  button
+                  sx={{
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+                    display: showUnread && user.unread === 0 ? "none" : "flex",
+                    alignItems: "center",
+                    "&:hover": { bgcolor: "#3b1e3d", cursor: "pointer" },
+                  }}
+                  onClick={() => handleUserSelect(user)}  // Handle user click
                 >
-                  <Avatar src={user.avatar}>{user.avatar ? "" : user.name[0]}</Avatar>
-                </Badge>
-              </ListItemAvatar>
+                  <ListItemAvatar>
+                    <Badge
+                      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                      overlap="circular"
+                    >
+                      <Avatar src={user.avatar ? user.avatar : ""}>
+                        {user.avatar ? "" : user.fullName[0]}
+                      </Avatar>
+                      {user.isOnline && (
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            bottom: 2,
+                            right: 2,
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            bgcolor: "green",
+                          }}
+                        />
+                      )}
+                    </Badge>
+                  </ListItemAvatar>
 
-              {/* Name & Message */}
-              <ListItemText
-                primary={
-                  <Typography fontWeight={user.unread > 0 ? "bold" : "normal"}>
-                    {user.name}
-                  </Typography>
-                }
-                secondary={user.message}
-                sx={{ color: "#ccc" }}
-              />
-
-              {/* Time & Unread Badge */}
-              <Box display="flex" flexDirection="column" alignItems="flex-end">
-                <Typography variant="caption" sx={{ color: "#999", mb: 0.3 }}>
-                  {user.time}
-                </Typography>
-                {user.unread > 0 && (
-                  <Badge
-                    badgeContent={user.unread}
-                    color="error"
-                    sx={{ mt: 0.8, mr: -0.5 }}
+                  <ListItemText
+                    primary={
+                      <Typography fontWeight={user.unread > 0 ? "bold" : "normal"}>
+                        {user.fullName}
+                      </Typography>
+                    }
+                    secondary={user.message}
+                    sx={{ color: "#ccc" }}
                   />
-                )}
-              </Box>
-            </ListItem>
-          ))}
-        </List>
+
+                  <Box display="flex" flexDirection="column" alignItems="flex-end">
+                    <Typography variant="caption" sx={{ color: "#999", mb: 0.3 }}>
+                      {user.time}
+                    </Typography>
+                    {user.unread > 0 && (
+                      <Badge badgeContent={user.unread} color="error" sx={{ mt: 0.8, mr: -0.5 }} />
+                    )}
+                  </Box>
+                </ListItem>
+              ))
+            ) : (
+              <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
+                No users found.
+              </Typography>
+            )}
+          </List>
+        </Box>
       </Box>
+
+      {/* Chat Workspace (Right Side) */}
+      {selectedUser && (
+        <Box
+          sx={{
+            flex: 1,
+            bgcolor: "#1e1e1e",
+            color: "white",
+            display: "flex",
+            flexDirection: "column",
+            padding: 2,
+          }}
+        >
+      
+        </Box>
+      )}
     </Box>
   );
 };
