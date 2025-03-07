@@ -1,29 +1,30 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { signupUser, loginUser } from '../../../redux/authSlice';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Box, Typography, TextField, Button, Card, InputAdornment } from '@mui/material';
 import { Email, Lock, Person, Phone } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import parkhyalogo from '../../../assets/images/parkhyalogo.png';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import parkhyalogo from '../../../assets/parkhyalogo.png';
 
 const Signup = () => {
-  const navigate = useNavigate(); // Create a navigate instance
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
+  // Validation schema
   const validationSchema = Yup.object({
     fullName: Yup.string().required('Full Name is required'),
     mobileNumber: Yup.string()
-      .matches(/^(?:\+?\d{1,3}[- ]?)?\d{10}$/, 'Enter a valid mobile number') // Updated regex for mobile number
+      .matches(/^(?:\+?\d{1,3}[- ]?)?\d{10}$/, 'Enter a valid mobile number')
       .required('Mobile Number is required'),
     email: Yup.string().email('Enter a valid email').required('Email is required'),
-    password: Yup.string()
-      .min(8, 'Password should be at least 8 characters')
-      .required('Password is required'),
+    password: Yup.string().min(8, 'Password should be at least 8 characters').required('Password is required'),
   });
 
+  // Formik form handling
   const formik = useFormik({
     initialValues: {
       fullName: '',
@@ -32,31 +33,53 @@ const Signup = () => {
       password: '',
     },
     validationSchema,
-    validateOnChange: true, // Validate fields on change
-    onSubmit: (values) => {
-      axios.post('http://192.168.0.152:8000/api/auth/register', values)
-        .then(response => {
-          localStorage.setItem('token', response.data.data.token);
-          toast.success('Registration successful! Redirecting to dashboard...');
-          navigate('/login'); // Navigate to login page after successful registration
-          console.log('User registered successfully', response.data);
-        })
-        .catch(error => {
-          console.error('There was an error registering!', error); 
-          if (!error.response) {
-            toast.error('Network error. Please check your connection.'); // Show network error toast
-          }
-          console.log('Error response:', error.response); // Log the error response to see its structure
-          if (error.response && error.response.data.message === 'User already exists') {
-            formik.setFieldError('email', 'User already exists'); // Set email field error
-            formik.setTouched({ email: true }); // Mark email field as touched
-            toast.error('Registration failed. User already exists.'); // Show error toast
-          } else {
-            toast.error('Registration failed. Please try again.'); // Show generic error toast
-          }
-        });
+    validateOnChange: true,
+    onSubmit: async (values) => {
+      try {
+        // First, sign up the user
+        const signupResult = await dispatch(signupUser(values));
+
+        if (signupResult.error) {
+          throw new Error(signupResult.error.message || 'Registration failed. Please try again.');
+        }
+
+        // If signup is successful, log the user in with the same credentials
+        const loginResult = await dispatch(loginUser(values)); // Use the same credentials for login
+
+        if (loginResult.error) {
+          throw new Error(loginResult.error.message || 'Login failed. Please try again.');
+        }
+
+        // Save token and redirect to the dashboard
+        const token = loginResult.payload?.data?.token; // Safe access to token
+        if (token) {
+          localStorage.setItem('token', token);
+          toast.success('Registration and login successful! Redirecting to dashboard...');
+          navigate('/dashboard');
+        } else {
+          throw new Error('Token not received from server.');
+        }
+      } catch (error) {
+        toast.error(error.message || 'An unexpected error occurred. Please try again.');
+      }
     },
   });
+
+  // Dynamic label helper function
+  const getLabel = (field) => {
+    switch (field) {
+      case 'fullName':
+        return 'Full Name';
+      case 'mobileNumber':
+        return 'Mobile Number';
+      case 'email':
+        return 'Email Address';
+      case 'password':
+        return 'Password';
+      default:
+        return '';
+    }
+  };
 
   return (
     <Box
@@ -65,25 +88,14 @@ const Signup = () => {
       alignItems="center"
       minHeight="100vh"
       bgcolor="transparent"
-      padding={2}
-      style={{
+      sx={{
         background: 'linear-gradient(135deg, #4A154B, #3D63A2, #36B3A0)',
         backgroundSize: 'cover',
-        overflow: 'hidden',
         height: '100vh',
-      
+        padding: 2,
       }}
     >
-      <Card
-        sx={{
-          width: '100%',
-          maxWidth: '560px',
-          padding: '30px',
-          borderRadius: '12px',
-          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-          backgroundColor: 'white',
-        }}
-      >
+      <Card sx={{ width: '100%', maxWidth: '560px', padding: 3, borderRadius: '12px', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
         <Box display="flex" justifyContent="center" marginBottom={3}>
           <img
             src={parkhyalogo}
@@ -108,17 +120,13 @@ const Signup = () => {
         </Box>
 
         <form onSubmit={formik.handleSubmit}>
-          {['fullName', 'mobileNumber', 'email', 'password'].map((field, index) => (
+          {['fullName', 'mobileNumber', 'email', 'password'].map((field) => (
             <TextField
-              key={index}
+              key={field}
               fullWidth
               id={field}
               name={field}
-              label={
-                field === 'fullName' ? 'Full Name' :
-                field === 'mobileNumber' ? 'Mobile Number' :
-                field === 'email' ? 'Email Address' : 'Password'
-              }
+              label={getLabel(field)}
               variant="outlined"
               type={field === 'password' ? 'password' : 'text'}
               value={formik.values[field]}
@@ -171,7 +179,7 @@ const Signup = () => {
           </Typography>
         </Box>
       </Card>
-      <ToastContainer /> {/* Add ToastContainer for notifications */}
+      <ToastContainer />
     </Box>
   );
 };

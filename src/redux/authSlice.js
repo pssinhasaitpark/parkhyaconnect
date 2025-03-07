@@ -3,12 +3,36 @@ import axios from "axios";
 
 const API_BASE_URL = "http://192.168.0.152:8000/api";
 
-// Initial state
+// Helper function to safely set token in localStorage
+const saveTokenToStorage = (token) => {
+  try {
+    if (token) {
+      localStorage.setItem("token", token);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Error saving token to localStorage:", error);
+    return false;
+  }
+};
+
+// Helper function to safely get token from localStorage
+const getTokenFromStorage = () => {
+  try {
+    return localStorage.getItem("token");
+  } catch (error) {
+    console.error("Error retrieving token from localStorage:", error);
+    return null;
+  }
+};
+
+// Initial state with safer token retrieval
 const initialState = {
   users: [],
-  selectedUser: null, // Add selectedUser to the initial state
-  isAuthenticated: !!localStorage.getItem("token"),
-  token: localStorage.getItem("token") || null,
+  selectedUser: null,
+  isAuthenticated: false,
+  token: null,
   messages: [],
   loading: false,
   error: null,
@@ -19,14 +43,18 @@ export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/login`,
-        credentials
-      );
-      localStorage.setItem("token", response.data.token);
-      return response.data;
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
+      const token = response?.data?.token || response?.data?.data?.token || response?.data?.user?.token;
+
+      if (token) {
+        saveTokenToStorage(token);
+        return { ...response.data, token };
+      } else {
+        return rejectWithValue("No token received from server. Check API response format.");
+      }
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Login failed");
+      const errorMessage = error?.response?.data?.message || error?.message || "Login failed due to an unexpected error.";
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -36,13 +64,14 @@ export const signupUser = createAsyncThunk(
   "auth/signupUser",
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/register`,
-        userData
-      );
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
+      if (response?.data?.token) {
+        saveTokenToStorage(response.data.token);
+      }
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Signup failed");
+      const errorMessage = error?.response?.data?.message || error?.message || "Signup failed due to an unexpected error.";
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -50,26 +79,23 @@ export const signupUser = createAsyncThunk(
 // Fetch Users Thunk
 export const fetchUsers = createAsyncThunk(
   "auth/fetchUsers",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getState().auth.token || getTokenFromStorage();
+      if (!token) {
+        return rejectWithValue("No authentication token found");
+      }
       const response = await axios.get(`${API_BASE_URL}/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // Extract only necessary fields
-      const filteredUsers = response.data.data.users.map((user) => ({
+      return response.data.data.users.map((user) => ({
+        isOnline: user.isOnline,
         id: user.id,
         fullName: user.fullName,
         avatar: user.avatar,
-        isOnline: user.isOnline,
       }));
-
-      return filteredUsers;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch users"
-      );
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch users");
     }
   }
 );
@@ -77,18 +103,18 @@ export const fetchUsers = createAsyncThunk(
 // Fetch Selected User Thunk
 export const fetchSelectedUser = createAsyncThunk(
   "auth/fetchSelectedUser",
-  async (id, { rejectWithValue }) => {
+  async (id, { rejectWithValue, getState }) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getState().auth.token || getTokenFromStorage();
+      if (!token) {
+        return rejectWithValue("No authentication token found");
+      }
       const response = await axios.get(`${API_BASE_URL}/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      return response.data; // Assuming the API returns user details
+      return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch user details"
-      );
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch user details");
     }
   }
 );
@@ -96,17 +122,18 @@ export const fetchSelectedUser = createAsyncThunk(
 // Fetch Messages Thunk
 export const fetchMessages = createAsyncThunk(
   "auth/fetchMessages",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getState().auth.token || getTokenFromStorage();
+      if (!token) {
+        return rejectWithValue("No authentication token found");
+      }
       const response = await axios.get(`${API_BASE_URL}/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data.messages;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch messages"
-      );
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch messages");
     }
   }
 );
@@ -119,9 +146,7 @@ export const forgotPassword = createAsyncThunk(
       await axios.post(`${API_BASE_URL}/auth/forgot-password`, { email });
       return null;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Password reset failed"
-      );
+      return rejectWithValue(error.response?.data?.message || "Password reset failed");
     }
   }
 );
@@ -131,52 +156,66 @@ export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
   async ({ token, newPassword }, { rejectWithValue }) => {
     try {
-      await axios.post(`${API_BASE_URL}/auth/reset-password`, {
-        token,
-        newPassword,
-      });
+      await axios.post(`${API_BASE_URL}/auth/reset-password`, { token, newPassword });
       return null;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Password reset failed"
-      );
+      return rejectWithValue(error.response?.data?.message || "Password reset failed");
     }
   }
 );
 
+// Send Message Thunk
 export const sendMessage = createAsyncThunk(
   "auth/sendMessage",
-  async ({ content, receiverId }, { rejectWithValue }) => {
+  async ({ content, receiverId }, { rejectWithValue, getState }) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getState().auth.token || getTokenFromStorage();
+      if (!token) {
+        return rejectWithValue("No authentication token found");
+      }
       const response = await axios.post(
-        "http://192.168.0.152:8000/api/messages",
-        {
-          content,
-          receiverId,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${API_BASE_URL}/messages`,
+        { content, receiverId },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      return response.data.message; // Assuming the API returns the sent message
+      return response.data.message;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to send message"
-      );
+      return rejectWithValue(error.response?.data?.message || "Failed to send message");
     }
   }
 );
 
+// Create the auth slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    updateUserStatus: (state, action) => {
+      const { userId, isOnline } = action.payload;
+      const user = state.users.find(user => user.id === userId);
+      if (user) {
+        user.isOnline = isOnline;
+      }
+    },
+    initializeAuth: (state) => {
+      console.log("Initializing authentication...");
+      console.log("Token found:", getTokenFromStorage());
+      const token = getTokenFromStorage();
+      state.token = token;
+      state.isAuthenticated = !!token;
+    },
     setSelectedUser: (state, action) => {
-      state.selectedUser = action.payload; // Add reducer to set selected user
+      state.selectedUser = action.payload;
     },
     setToken(state, action) {
-      state.token = action.payload;
+      const token = action.payload;
+      state.token = token;
+      state.isAuthenticated = !!token;
+      if (token) {
+        saveTokenToStorage(token);
+      } else {
+        localStorage.removeItem("token");
+      }
     },
     logout(state) {
       state.token = null;
@@ -196,30 +235,35 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.isAuthenticated = true;
-        state.token = action.payload.token;
+        if (action.payload && action.payload.token) {
+          state.token = action.payload.token;
+          state.isAuthenticated = true;
+          saveTokenToStorage(action.payload.token);
+        }
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.isAuthenticated = false;
+        state.token = null;
       })
-
       .addCase(signupUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(signupUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.isAuthenticated = true;
-        state.token = action.payload.token;
+        if (action.payload && action.payload.token) {
+          state.token = action.payload.token;
+          state.isAuthenticated = true;
+          saveTokenToStorage(action.payload.token);
+        }
       })
       .addCase(signupUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.isAuthenticated = false;
       })
-
       .addCase(fetchUsers.pending, (state) => {
         state.loading = true;
       })
@@ -231,13 +275,10 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(fetchSelectedUser.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchSelectedUser.fulfilled, (state, action) => {
-        state.selectedUser = action.payload;
-
         state.loading = false;
         state.selectedUser = action.payload;
       })
@@ -245,7 +286,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(fetchMessages.pending, (state) => {
         state.loading = true;
       })
@@ -257,7 +297,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(forgotPassword.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -269,7 +308,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(resetPassword.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -280,10 +318,23 @@ const authSlice = createSlice({
       .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(sendMessage.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(sendMessage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload) {
+          state.messages = [...state.messages, action.payload];
+        }
+      })
+      .addCase(sendMessage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
 // Export actions and reducer
-export const { setToken, logout, clearError } = authSlice.actions;
+export const { initializeAuth, setSelectedUser, setToken, logout, clearError, updateUserStatus } = authSlice.actions;
 export default authSlice.reducer;

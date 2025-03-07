@@ -1,8 +1,15 @@
 import React from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { Popover, Avatar, Box, Typography, Divider, List, ListItem, ListItemText } from "@mui/material";
 
-const UserMenu = ({ anchorEl, onClose }) => {
+const UserMenu = ({ anchorEl, onClose, logoutUser, selectedUser }) => {
+  const navigate = useNavigate(); // Initialize useNavigate
   const open = Boolean(anchorEl);
+
+  const handleLogout = () => {
+    logoutUser(); // Call the logout function passed as a prop
+    navigate('/login'); // Redirect to the login page after logout (or dashboard if needed)
+  };
 
   return (
     <Popover
@@ -31,7 +38,7 @@ const UserMenu = ({ anchorEl, onClose }) => {
       <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1 }}>
         <Avatar sx={{ bgcolor: "#aaa", color: "black" }}>PS</Avatar>
         <Box>
-          <Typography variant="body1" fontWeight="bold">Namokar Nagar</Typography>
+          <Typography variant="body1" fontWeight="bold">{selectedUser ? selectedUser.fullName : 'Select a user'}</Typography>
           <Typography variant="body2" color="gray">Active</Typography>
         </Box>
       </Box>
@@ -57,7 +64,7 @@ const UserMenu = ({ anchorEl, onClose }) => {
           <ListItemText primary="Downloads" />
         </ListItem>
         <Divider sx={{ bgcolor: "gray", my: 1 }} />
-        <ListItem button>
+        <ListItem button onClick={handleLogout}>
           <ListItemText primary="Sign out of Parkhya Solutions" sx={{ color: "red" }} />
         </ListItem>
       </List>

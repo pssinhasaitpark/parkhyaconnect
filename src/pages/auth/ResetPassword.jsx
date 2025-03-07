@@ -1,10 +1,14 @@
 import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import { resetPassword } from "../../redux/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Box, Typography, TextField, Button, Card } from "@mui/material";
 
 const ResetPassword = () => {
+  const dispatch = useDispatch();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
@@ -14,7 +18,7 @@ const ResetPassword = () => {
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get("token");
 
-  const resetPassword = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (newPassword.length === 0) {
@@ -26,30 +30,10 @@ const ResetPassword = () => {
     }
 
     try {
-      // Additional validation for new password
-      const response = await fetch("http://192.168.0.152:8000/api/auth/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,  // Ensure token is included
-          newPassword,
-          confirmPassword,
-        }),
-      });
-
-      const data = await response.json(); // Parse JSON response
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to reset password.");
-      }
-
+      await dispatch(resetPassword({ token, newPassword })); // Dispatch reset password action
       toast.success("Password changed successfully!");
       setTimeout(() => navigate("/login"), 1500); // Redirect after success
-
     } catch (error) {
-      console.error("Reset Password Error:", error);
       toast.error(error.message || "Something went wrong. Please try again.");
     }
   };
@@ -86,7 +70,7 @@ const ResetPassword = () => {
           </Typography>
         </Box>
 
-        <form onSubmit={resetPassword}>
+        <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
             id="newPassword"
