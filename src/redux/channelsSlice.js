@@ -15,8 +15,12 @@ export const fetchChannels = createAsyncThunk(
   "channels/fetchChannels",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/channels`);
-      return response.data; // Assuming the API returns the channels
+      const token = localStorage.getItem("token"); // Retrieve the token from local storage
+      const response = await axios.get(`${API_BASE_URL}/channels`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Check if the response has a data property
+      return response.data.data || response.data; // Handle both response formats
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch channels"
@@ -38,7 +42,8 @@ export const createChannel = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      return response.data; // Assuming the API returns the created channel
+      // Extract the channel data from the nested response
+      return response.data.data || response.data; // Handle both response formats
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to create channel"
@@ -60,7 +65,7 @@ export const addMemberToChannel = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      return response.data; // Assuming the API returns the updated channel
+      return response.data.data || response.data; // Handle both response formats
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to add member to channel"

@@ -25,6 +25,7 @@ import {
   Phone as PhoneIcon
 } from '@mui/icons-material';
 import { addMessage, fetchMessages, sendMessage } from '../../redux/messagesSlice';
+import { fetchSelectedUser } from '../../redux/authSlice'; // Correct import
 
 // Create a custom theme with dark mode
 const theme = createTheme({
@@ -321,7 +322,7 @@ const MessageList = ({ messages, currentUser  }) => {
   );
 };
 
-const SlackChatUI = () => {
+const UserChatUI = ({ id }) => {
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isOnline, setIsOnline] = useState(false);
@@ -335,14 +336,20 @@ const SlackChatUI = () => {
     dispatch(fetchMessages());
   }, [dispatch]);
   
-  const currentUser  = useSelector((state) => state.auth.user);
-  const selectedUser  = useSelector((state) => state.auth.selectedUser );
+  const currentUser = useSelector((state) => state.auth.user);
+  const selectedUser = useSelector((state) => state.auth.selectedUser);
+
+useEffect(() => {
+  if (id) {
+    dispatch(fetchSelectedUser(id));
+  }
+}, [dispatch, id]);
   
   useEffect(() => {
     if (selectedUser?.id) {
       dispatch(fetchMessages(selectedUser.id));
     }
-  }, [dispatch, selectedUser?.id]);
+  }, [dispatch, selectedUser?.id, currentUser?.id]);
   const users = useSelector((state) => state.auth.users);
 
   const error = useSelector((state) => state.auth.error);
@@ -404,13 +411,16 @@ const SlackChatUI = () => {
       Notification.requestPermission();
     }
 
-    return () => {
-      socket.off('receive_message');
-      socket.off('user_typing');
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.off('connect_error');
-    };
+   
+      return () => {
+        socket.off('receive_message');
+        socket.off('user_typing');
+        socket.off('connect');
+        socket.off('disconnect');
+        socket.off('connect_error');
+      };
+      
+  
   }, [socket, dispatch, currentUser , selectedUser ]);
 
   const showNotification = (message, severity = 'info') => {
@@ -422,6 +432,10 @@ const SlackChatUI = () => {
   };
 
   const handleSendMessage = () => {
+    if (!selectedUser) {
+      showNotification('Please select a user to chat with.', 'warning');
+      return;
+    }
     if (message.trim() && socket) {
       const userId = currentUser ?.id || currentUser ?.userId || 'unknown-user';
       const userName = currentUser ?.fullName || currentUser ?.name || 'Unknown User';
@@ -468,20 +482,20 @@ const SlackChatUI = () => {
     }
   };
 
-  return (
-    <ThemeProvider theme={theme}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100vh',
-          width: '77vw',
-          backgroundColor: theme.palette.background.default
-        }}
-      >
-        <Header user={selectedUser ?.data || selectedUser } isOnline={isOnline} isTyping={isTyping} error={error} />
-        <MessageList messages={messages} currentUser ={currentUser } />
-        <MessageInput message={message} setMessage={setMessage} handleSendMessage={handleSendMessage} />
+  return ( 
+    <ThemeProvider theme={theme}> 
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          height: '100vh', 
+          width: '77vw', 
+          backgroundColor: theme.palette.background.default 
+        }} 
+      > 
+        <Header user={selectedUser?.data || selectedUser} isOnline={isOnline} isTyping={isTyping} error={error} /> 
+        <MessageList messages={messages} currentUser={currentUser} /> 
+        <MessageInput message={message} setMessage={setMessage} handleSendMessage={handleSendMessage} /> 
         
         <Snackbar 
           open={notification.open} 
@@ -498,4 +512,4 @@ const SlackChatUI = () => {
   );
 };
 
-export default SlackChatUI;
+export default UserChatUI; // Change this line to export SlackChatUI

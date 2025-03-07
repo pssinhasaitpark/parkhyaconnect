@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { setToken } from './redux/authSlice';
+import { initializeAuth } from './redux/authSlice';
 import Signup from './pages/auth/signup/Signup';
 import Login from './pages/auth/login/Login';
 import Dashboard from './pages/dashboard/Dashboard';
@@ -12,13 +12,26 @@ import SlackChatUI from './components/ChatBox/ChatUI';
 function App() {
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Initialize authentication on app load
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      dispatch(setToken(token));
-    }
+    // Call the new initialization action
+    dispatch(initializeAuth());
+    setIsInitialized(true);
+    
+    // Debug: Log authentication state
+    console.log("App initialization - Auth state:", {
+      isAuthenticated,
+      token: localStorage.getItem('token')
+    });
   }, [dispatch]);
+
+  // Wait for initialization before rendering routes
+  if (!isInitialized) {
+    // You could add a loading spinner here if needed
+    return null;
+  }
 
   return (
     <Router>

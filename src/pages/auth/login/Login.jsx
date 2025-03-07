@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../../../redux/authSlice';
+import { loginUser, setToken, initializeAuth } from '../../../redux/authSlice';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -16,7 +16,23 @@ const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
-  const [showPassword, setShowPassword] = React.useState(false);
+  const token = useSelector((state) => state.auth.token);
+  const loading = useSelector((state) => state.auth.loading);
+  const error = useSelector((state) => state.auth.error);
+  const [showPassword, setShowPassword] = useState(false);
+  const [initDone, setInitDone] = useState(false);
+
+  // Initialize auth state at startup
+  useEffect(() => {
+    dispatch(initializeAuth());
+    setInitDone(true);
+  }, [dispatch]);
+
+  // Debug log for initial auth state
+  useEffect(() => {
+    console.log("Auth state:", { isAuthenticated, token, initDone });
+    console.log("Stored token:", localStorage.getItem("token"));
+  }, [isAuthenticated, token, initDone]);
 
   // Validation schema using Yup
   const validationSchema = Yup.object({
@@ -32,30 +48,97 @@ const Login = () => {
     },
     validationSchema,
     onSubmit: async (values) => {
-        console.log("Login attempt with values:", values); // Debugging log
+      console.log("Login attempt with values:", values);
 
-  try {
-    const resultAction = await dispatch(loginUser({ email: values.email, password: values.password }));
+      try {
+        const resultAction = await dispatch(loginUser({
+          email: values.email,
+          password: values.password
+        }));
 
-    if (loginUser.fulfilled.match(resultAction)) {
-      console.log("Login successful, response:", resultAction); // Debugging log
-      toast.success('Login successful!');
-      navigate('/dashboard'); // Navigate only on success
-    } else {
-      toast.error(resultAction.payload || 'Invalid email or password');
-    }
-  } catch (error) {
-    toast.error(error.response?.data?.message || 'Login failed. Please try again.');
-  }
-},
-
+        if (loginUser.fulfilled.match(resultAction)) {
+          console.log("Login response:", resultAction.payload);
+          
+          // Check if we got a token
+          if (resultAction.payload && resultAction.payload.token) {
+            console.log("Token received:", resultAction.payload.token);
+            
+            // The token is already saved in localStorage by the thunk
+            // Let's verify it was saved correctly
+            const storedToken = localStorage.getItem("token");
+            console.log("Verification - token in localStorage:", storedToken);
+            
+            if (storedToken !== resultAction.payload.token) {
+              // If there's a mismatch, try setting it directly
+              console.log("Token mismatch detected, setting manually");
+              localStorage.setItem("token", resultAction.payload.token);
+              
+              // Also update Redux state directly
+              dispatch(setToken(resultAction.payload.token));
+            }
+            
+            toast.success('Login successful!');
+            
+            // Short timeout to ensure state is updated before navigation
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 100);
+          } else {
+            toast.error('No token received from server');
+          }
+        } else {
+          console.error("Login failed:", resultAction.payload);
+          toast.error(resultAction.payload || 'Invalid email or password');
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        toast.error(error.response?.data?.message || 'Login failed. Please try again.');
+      }
+    },
   });
 
+  // Check for authentication changes - only navigate after initialization
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard'); // Redirect to dashboard if authenticated
+    if (initDone && isAuthenticated && token) {
+      console.log("Redirecting to dashboard. Token:", token);
+      navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, token, navigate, initDone]);
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
+  const handleGoogleLogin = async (response) => {
+    try {
+      const token = response.credential;
+      console.log("Google token received:", token);
+      
+      // First save to localStorage directly
+      localStorage.setItem('token', token);
+      
+      // Then update Redux with a small delay to ensure localStorage has been updated
+      setTimeout(() => {
+        dispatch(setToken(token));
+        
+        // Verify it was saved
+        const storedToken = localStorage.getItem("token");
+        console.log("Google login token verification:", {
+          original: token,
+          stored: storedToken
+        });
+        
+        toast.success('Google login successful!');
+        navigate('/dashboard');
+      }, 100);
+    } catch (error) {
+      console.error("Google login error:", error);
+      toast.error('Google Login failed. Please try again.');
+    }
+  };
 
   return ( 
     <Box
@@ -133,6 +216,7 @@ const Login = () => {
             variant="contained"
             type="submit"
             size="large"
+            disabled={loading}
             sx={{
               mt: 2,
               mb: 3,
@@ -146,7 +230,7 @@ const Login = () => {
               textTransform: 'none',
             }}
           >
-            Sign In
+            {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
 
@@ -169,12 +253,7 @@ const Login = () => {
 
         <Box display="flex" justifyContent="center" my={2}>
           <GoogleLogin
-            onSuccess={async (response) => {
-              const token = response.credential;
-              localStorage.setItem('token', token); // Save token
-              toast.success('Login successful!');
-              navigate('/dashboard');
-            }}
+            onSuccess={handleGoogleLogin}
             onError={() => toast.error('Google Login failed. Please try again.')}
             useOneTap
           />

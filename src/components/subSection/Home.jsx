@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers } from "../../redux/authSlice"; // Assuming you have a fetchUsers action
-import { fetchChannels } from "../../redux/channelsSlice"; // Import fetchChannels action
+import { fetchUsers } from "../../redux/authSlice";
+import { fetchChannels } from "../../redux/channelsSlice";
 import {
   Box,
   List,
@@ -11,32 +11,40 @@ import {
   Collapse,
   Typography,
   Avatar,
+  CircularProgress
 } from "@mui/material";
-import { ExpandLess, ExpandMore, Add } from "@mui/icons-material";
+import { ExpandLess, ExpandMore, Add, Tag } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import ChannelPopup from "../../components/ChatBox/ChannelPopup"; // Importing ChannelPopup
+import ChannelPopup from "../../components/ChatBox/ChannelPopup";
 
 const Home = ({ onUserSelect }) => {
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
-  const [openChannelPopup, setOpenChannelPopup] = useState(false); // State for channel popup
+  const [openChannelPopup, setOpenChannelPopup] = useState(false);
 
   const dispatch = useDispatch();
-  const { users, loading } = useSelector((state) => state.auth); // Default users as empty array
+  const navigate = useNavigate();
+  
+  const { users, loading: usersLoading } = useSelector((state) => state.auth);
+  const { channels, loading: channelsLoading } = useSelector((state) => state.channels);
 
   useEffect(() => {
-    dispatch(fetchUsers()); // Fetch users on component mount
-    dispatch(fetchChannels()); // Fetch channels on component mount
+    dispatch(fetchUsers());
+    dispatch(fetchChannels());
   }, [dispatch]);
-
-  const channels = useSelector((state) => state.channels.channels); // Get channels from Redux state
-
+  
   const handleOpenChannelPopup = () => {
     setOpenChannelPopup(true);
   };
 
   const handleCloseChannelPopup = () => {
     setOpenChannelPopup(false);
+  };
+
+  const handleChannelSelect = (channelId, channelName) => {
+    // Navigate to channel or handle channel selection
+    console.log(`Selected channel: ${channelName} (${channelId})`);
+    // navigate(`/channel/${channelId}`); // Uncomment if you have a route set up
   };
 
   return (
@@ -61,10 +69,22 @@ const Home = ({ onUserSelect }) => {
         </ListItem>
         <Collapse in={channelsOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            {channels.length > 0 ? (
+            {channelsLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 2 }}>
+                <CircularProgress size={24} sx={{ color: 'white' }} />
+              </Box>
+            ) : channels && channels.length > 0 ? (
               channels.map((channel) => (
-                <ListItem button key={channel} sx={{ pl: 2 }}>
-                  <ListItemText primary={`# ${channel}`} />
+                <ListItem 
+                  button 
+                  key={channel.id} 
+                  sx={{ pl: 2 }}
+                  onClick={() => handleChannelSelect(channel.id, channel.name)}
+                >
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <Tag sx={{ color: "white", fontSize: 18 }} />
+                  </ListItemIcon>
+                  <ListItemText primary={channel.name} />
                 </ListItem>
               ))
             ) : (
@@ -91,10 +111,10 @@ const Home = ({ onUserSelect }) => {
         <Collapse in={dmsOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {/* Loading State */}
-            {loading ? (
-              <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
-                Loading users...
-              </Typography>
+            {usersLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 2 }}>
+                <CircularProgress size={24} sx={{ color: 'white' }} />
+              </Box>
             ) : Array.isArray(users) && users.length > 0 ? (
               users.map((user) => (
                 <ListItem

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers, fetchSelectedUser } from "../../redux/authSlice";
+import { fetchUsers, fetchSelectedUser, updateUserStatus } from "../../redux/authSlice";
+import { io } from "socket.io-client";
 import {
   Box,
   Typography,
@@ -14,52 +15,46 @@ import {
   Badge,
   Switch,
   Divider,
-  CircularProgress
 } from "@mui/material";
-import { Search, Edit, Send } from "@mui/icons-material";
+import { Search, Edit } from "@mui/icons-material";
+
+const socket = io("http://192.168.0.152:8000"); // Replace with your backend URL
 
 const DMs = () => {
   const [showUnread, setShowUnread] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  // Removed local state for selectedUser as it is managed in Redux
-
-  const [newMessage, setNewMessage] = useState("");  // Track the new message input
-
+  const [searchQuery, setSearchQuery] = useState("");
   const dispatch = useDispatch();
   const { users, loading, error, selectedUser } = useSelector((state) => state.auth);
-  const errorMessage = error ? <Typography sx={{ color: 'red', textAlign: 'center' }}>{error}</Typography> : null;
-
-  const { messages } = useSelector((state) => state.messages);
 
   useEffect(() => {
-    dispatch(fetchUsers());  // Fetch users on component mount
+    dispatch(fetchUsers());
   }, [dispatch]);
 
-  // Handle user selection from the sidebar
+  useEffect(() => {
+    socket.on("user_online", (userId) => {
+      dispatch(updateUserStatus({ userId, isOnline: true }));
+    });
+
+    socket.on("user_offline", (userId) => {
+      dispatch(updateUserStatus({ userId, isOnline: false }));
+    });
+
+    return () => {
+      socket.off("user_online");
+      socket.off("user_offline");
+    };
+  }, [dispatch]);
+
   const handleUserSelect = async (user) => {
-    const userDetail = await dispatch(fetchSelectedUser(user.id)).unwrap();
+    await dispatch(fetchSelectedUser(user.id)).unwrap();
   };
 
-  // Filter users based on the search query
-  const filteredUsers = (users || []).filter(user =>
+  const filteredUsers = (users || []).filter((user) =>
     user.fullName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle sending a new message
-  const handleSendMessage = () => {
-    if (newMessage.trim() !== "") {
-      // Dispatch the message to be sent to the selected user
-      dispatch(sendMessage({ content: newMessage, receiverId: selectedUser.id }));
-      setNewMessage("");  // Clear the message input
-    }
-  };
-
-
-
-
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
-      {/* Sidebar */}
       <Box
         sx={{
           width: 320,
@@ -70,7 +65,6 @@ const DMs = () => {
           padding: 2,
         }}
       >
-        {/* Fixed Header */}
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, pb: 2 }}>
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h6">Direct Messages</Typography>
@@ -102,19 +96,11 @@ const DMs = () => {
           </Box>
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="body2">Unread messages</Typography>
-            <Switch
-              checked={showUnread}
-              onChange={() => setShowUnread(!showUnread)}
-            />
+            <Switch checked={showUnread} onChange={() => setShowUnread(!showUnread)} />
           </Box>
         </Box>
-
-        {errorMessage}
         <Divider sx={{ bgcolor: "#3b1e3d", my: 2 }} />
-
-        {/* Scrollable User List */}
         <Box sx={{ overflowY: "auto", flex: 1 }}>
-       
           <List>
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
@@ -127,16 +113,14 @@ const DMs = () => {
                     alignItems: "center",
                     "&:hover": { bgcolor: "#3b1e3d", cursor: "pointer" },
                   }}
-                  onClick={() => handleUserSelect(user)}  // Handle user click
+                  onClick={() => handleUserSelect(user)}
                 >
                   <ListItemAvatar>
                     <Badge
                       anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                       overlap="circular"
                     >
-                      <Avatar src={user.avatar ? user.avatar : ""}>
-                        {user.avatar ? "" : user.fullName[0]}
-                      </Avatar>
+                      <Avatar src={user.avatar || ""}>{user.avatar ? "" : user.fullName[0]}</Avatar>
                       {user.isOnline && (
                         <Box
                           sx={{
@@ -152,51 +136,25 @@ const DMs = () => {
                       )}
                     </Badge>
                   </ListItemAvatar>
-
                   <ListItemText
-                    primary={
-                      <Typography fontWeight={user.unread > 0 ? "bold" : "normal"}>
-                        {user.fullName}
-                      </Typography>
-                    }
+                    primary={<Typography fontWeight={user.unread > 0 ? "bold" : "normal"}>{user.fullName}</Typography>}
                     secondary={user.message}
                     sx={{ color: "#ccc" }}
                   />
-
                   <Box display="flex" flexDirection="column" alignItems="flex-end">
                     <Typography variant="caption" sx={{ color: "#999", mb: 0.3 }}>
                       {user.time}
                     </Typography>
-                    {user.unread > 0 && (
-                      <Badge badgeContent={user.unread} color="error" sx={{ mt: 0.8, mr: -0.5 }} />
-                    )}
+                    {user.unread > 0 && <Badge badgeContent={user.unread} color="error" sx={{ mt: 0.8, mr: -0.5 }} />}
                   </Box>
                 </ListItem>
               ))
             ) : (
-              <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
-                No users found.
-              </Typography>
+              <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>No users found.</Typography>
             )}
           </List>
         </Box>
       </Box>
-
-      {/* Chat Workspace (Right Side) */}
-      {selectedUser && (
-        <Box
-          sx={{
-            flex: 1,
-            bgcolor: "#1e1e1e",
-            color: "white",
-            display: "flex",
-            flexDirection: "column",
-            padding: 2,
-          }}
-        >
-      
-        </Box>
-      )}
     </Box>
   );
 };

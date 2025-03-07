@@ -5,14 +5,14 @@ const API_BASE_URL = 'http://192.168.0.152:8000/api'; // Ensure this endpoint is
 
 // Initial state for messages
 const initialState = {
-  messages: [], // Ensure messages are initialized
+  messages: {}, // Change to an object to store messages by user ID
   loading: false,
   error: null,
   loading: false,
   error: null,
 };
 
-export const fetchMessages = createAsyncThunk('messages/fetchMessages', async (userId, { rejectWithValue }) => {
+export const fetchMessages = createAsyncThunk('messages/fetchMessages', async ({ userId }, { rejectWithValue }) => {
   if (!userId) {
     return rejectWithValue('User ID is required');
   }
@@ -25,7 +25,7 @@ export const fetchMessages = createAsyncThunk('messages/fetchMessages', async (u
     const response = await axios.get(`${API_BASE_URL}/messages/${userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return response.data.messages || []; // Ensure it returns an empty array if no messages
+    return response.data.messages || []; // Ensure it returns an empty array if no messages for the user
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch messages');
   }
@@ -36,7 +36,8 @@ export const sendMessage = createAsyncThunk('messages/sendMessage', async ({ con
   try {
     const token = localStorage.getItem('token');
     console.log('Sending message:', { content, receiverId }); // Log the request
-    const response = await axios.post(`${API_BASE_URL}/messages`, { content, receiverId }, {
+      const response = await axios.post(`${API_BASE_URL}/messages`, { content, receiverId, userId }, {
+
       headers: { Authorization: `Bearer ${token}` }
     });
     console.log('Response from server:', response.data); // Log the response
@@ -60,7 +61,10 @@ const messagesSlice = createSlice({
       );
       
       if (!messageExists) {
-        state.messages.push(action.payload);
+        if (!state.messages[receiverId]) {
+        state.messages[receiverId] = []; // Initialize if not present
+      }
+      state.messages[receiverId].push(action.payload); // Push to the specific user's message array
       }
     },
     // Action to clear messages when changing conversations
