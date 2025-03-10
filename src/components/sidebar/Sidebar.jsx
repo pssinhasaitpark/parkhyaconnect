@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, Box, IconButton, Avatar, Popover } from "@mui/material";
 import { HomeOutlined, ChatBubbleOutline, NotificationsNone, MoreHoriz, Add, Person } from "@mui/icons-material";
-import HomeComponent from "../subSection/Home";
-import DMsComponent from "../subSection/DMs";
+import Home from "../subSection/Home";
+import DMs from "../subSection/DMs"; // Correct import for DMs component
 import ActivityComponent from "../subSection/Activity";
 import MoreComponent from "../subSection/More";
 import UserMenu from "../subSection/UserMenu"; // Import UserMenu
 import { useSelector } from "react-redux"; // Import useSelector
 
 const Sidebar = ({ onUserSelect }) => {
+  const users = useSelector((state) => state.auth.users); // Retrieve users from Redux state
   
   const selectedUser = useSelector((state) => state.auth.selectedUser); // Retrieve selectedUser from Redux state
   const [selectedSection, setSelectedSection] = useState("Home");
@@ -16,13 +17,24 @@ const Sidebar = ({ onUserSelect }) => {
   const [moreAnchorEl, setMoreAnchorEl] = useState(null);
   const [userAnchorEl, setUserAnchorEl] = useState(null); // State for UserMenu
 
-  const handleSectionClick = (section) => {
+const handleSectionClick = (section) => {
     if (section === "More") {
+      return;
+    }
+    if (section === "DMs") {
+      setSelectedSection(section);
+      setMobilePanelOpen(true);
+      return;
+    }
+    if (section === "Channel") {
+      setSelectedSection(section);
+      setMobilePanelOpen(true);
       return;
     }
     setSelectedSection(section);
     setMobilePanelOpen(true);
-  };
+};
+
   const handleMoreClick = (event) => {
     setMoreAnchorEl(event.currentTarget);
   };
@@ -39,16 +51,19 @@ const Sidebar = ({ onUserSelect }) => {
     setUserAnchorEl(null); // Close UserMenu
   };
 
-  const renderSection = () => {
-    switch (selectedSection) {
+const renderSection = () => {
+  switch (selectedSection) {
       case "DMs":
-        return <DMsComponent onUserSelect={onUserSelect} />;
+        return <DMs onUserSelect={onUserSelect} />; // Render DMs component
+      case "Channel":
+        return <ChannelChatUI onUserSelect={onUserSelect} />;
       case "Activity":
         return <ActivityComponent />;
       default:
-        return <HomeComponent onUserSelect={onUserSelect} />;
+        return <Home onUserSelect={onUserSelect} />;
     }
-  };
+};
+
 
   return (
     <>
@@ -76,10 +91,19 @@ const Sidebar = ({ onUserSelect }) => {
           <Avatar sx={{ bgcolor: "#aaa", color: "black" }}>PS</Avatar>
         </Box>
 
-        {/* User List Removed */}
+      {/* <List>
+        {users.map((user) => (
+          <ListItem button key={user.id} onClick={() => onUserSelect(user)}>
+            <ListItemIcon>
+              <Avatar src={user.avatar} />
+            </ListItemIcon>
+            <ListItemText primary={user.fullName || user.name} />
+          </ListItem>
+        ))}
+      </List> */}
 
       {/* Navigation Icons */}
-        <List sx={{ width: "100%" }}>
+        <List sx={{ width: "100%", marginTop: "16px" }}>
           {[
             { label: "Home", icon: <HomeOutlined /> },
             { label: "DMs", icon: <ChatBubbleOutline /> },
