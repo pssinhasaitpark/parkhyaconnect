@@ -5,7 +5,7 @@ const API_BASE_URL = 'http://192.168.0.152:8000/api'; // Ensure this endpoint is
 
 // Initial state for messages
 const initialState = {
-  messages: {}, // Change to an object to store messages by user ID
+  messages: [], // Change to an array to store messages
   loading: false,
   error: null,
   loading: false,
@@ -61,10 +61,7 @@ const messagesSlice = createSlice({
       );
       
       if (!messageExists) {
-        if (!state.messages[receiverId]) {
-        state.messages[receiverId] = []; // Initialize if not present
-      }
-      state.messages[receiverId].push(action.payload); // Push to the specific user's message array
+        state.messages.push(action.payload); // Push to the messages array
       }
     },
     // Action to clear messages when changing conversations

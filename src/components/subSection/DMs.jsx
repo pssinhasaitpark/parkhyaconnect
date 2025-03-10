@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { TextField, IconButton, Badge, Switch, Divider } from "@mui/material";
+import { getColorFromName } from '../../utils/colorUtils';
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers, fetchSelectedUser, updateUserStatus } from "../../redux/authSlice";
 import { io } from "socket.io-client";
@@ -10,25 +12,24 @@ import {
   ListItemAvatar,
   Avatar,
   ListItemText,
-  TextField,
-  IconButton,
-  Badge,
-  Switch,
-  Divider,
 } from "@mui/material";
-import { Search, Edit } from "@mui/icons-material";
+import SearchIcon from '@mui/icons-material/Search';
+import EditIcon from '@mui/icons-material/Edit';
+import UserChatUI from "./UserChatUI";
 
 const socket = io("http://192.168.0.152:8000"); // Replace with your backend URL
 
-const DMs = () => {
+const DMs = () => { 
   const [showUnread, setShowUnread] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [message, setMessage] = useState("");
   const dispatch = useDispatch();
   const { users, loading, error, selectedUser } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
+
 
   useEffect(() => {
     socket.on("user_online", (userId) => {
@@ -54,7 +55,8 @@ const DMs = () => {
   );
 
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
+    <Box sx={{ display: "flex", height: "100vh", width: "100%" }}> 
+      {/* Left sidebar for DM list */}
       <Box
         sx={{
           width: 320,
@@ -63,13 +65,14 @@ const DMs = () => {
           display: "flex",
           flexDirection: "column",
           padding: 2,
+          borderRight: "1px solid rgba(255, 255, 255, 0.1)",
         }}
       >
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, pb: 2 }}>
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h6">Direct Messages</Typography>
             <IconButton sx={{ color: "white" }}>
-              <Edit />
+              <EditIcon />
             </IconButton>
           </Box>
           <Box
@@ -81,7 +84,7 @@ const DMs = () => {
             mt={1}
             mb={1}
           >
-            <Search sx={{ color: "#aaa", marginRight: 1 }} />
+            <SearchIcon sx={{ color: "#aaa", marginRight: 1 }} />
             <TextField
               variant="standard"
               placeholder="Find a DM"
@@ -112,6 +115,7 @@ const DMs = () => {
                     display: showUnread && user.unread === 0 ? "none" : "flex",
                     alignItems: "center",
                     "&:hover": { bgcolor: "#3b1e3d", cursor: "pointer" },
+                    bgcolor: selectedUser?.id === user.id ? "#3b1e3d" : "transparent",
                   }}
                   onClick={() => handleUserSelect(user)}
                 >
@@ -120,7 +124,9 @@ const DMs = () => {
                       anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                       overlap="circular"
                     >
-                      <Avatar src={user.avatar || ""}>{user.avatar ? "" : user.fullName[0]}</Avatar>
+                      <Avatar src={user.avatar || ""} sx={{ bgcolor: getColorFromName(user.fullName) }}>
+                        {user.avatar ? "" : user.fullName[0]}
+                      </Avatar>
                       {user.isOnline && (
                         <Box
                           sx={{
@@ -154,6 +160,39 @@ const DMs = () => {
             )}
           </List>
         </Box>
+      </Box>
+
+      {/* Right side chat area (Sliding in effect) */}
+      <Box sx={{
+        flex: 1, 
+        display: "flex", 
+        position: "relative",
+        transition: "all 0.5s ease", 
+        transform: selectedUser ? "translateX(0)" : "translateX(100%)",
+        width: "100%",
+        bgcolor: "#1E1E1E",
+        zIndex: selectedUser ? 1 : 0,
+      }}>
+        {selectedUser ? (
+          <UserChatUI 
+            id={selectedUser.id} 
+            selectedUser={selectedUser} 
+            selectedChannel={null} 
+          />
+        ) : (
+          <Box 
+            sx={{ 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              width: "100%",
+              bgcolor: "#1E1E1E", 
+              color: "white" 
+            }}
+          >
+            <Typography variant="h6">Select a conversation to start chatting</Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );

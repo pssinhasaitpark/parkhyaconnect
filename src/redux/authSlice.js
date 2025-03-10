@@ -45,12 +45,14 @@ export const loginUser = createAsyncThunk(
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
       const token = response?.data?.token || response?.data?.data?.token || response?.data?.user?.token;
+      console.log("Token received:", token); // Log the token for debugging
+      console.log("Token received:", token); // Log the token for debugging
 
       if (token) {
         saveTokenToStorage(token);
         return { ...response.data, token };
       } else {
-        return rejectWithValue("No token received from server. Check API response format.");
+        return rejectWithValue("No token received from server. Check API response format. Please ensure the API is returning the expected data.");
       }
     } catch (error) {
       const errorMessage = error?.response?.data?.message || error?.message || "Login failed due to an unexpected error.";
@@ -81,7 +83,8 @@ export const fetchUsers = createAsyncThunk(
   "auth/fetchUsers",
   async (_, { rejectWithValue, getState }) => {
     try {
-      const token = getState().auth.token || getTokenFromStorage();
+      const token = getState().auth.token || getTokenFromStorage(); 
+      console.log("Using token for fetch:", token); // Log the token being used
       if (!token) {
         return rejectWithValue("No authentication token found");
       }
@@ -113,11 +116,13 @@ export const fetchSelectedUser = createAsyncThunk(
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;
+      
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch user details");
     }
   }
 );
+
 
 // Fetch Messages Thunk
 export const fetchMessages = createAsyncThunk(
@@ -199,8 +204,8 @@ const authSlice = createSlice({
     },
     initializeAuth: (state) => {
       console.log("Initializing authentication...");
-      console.log("Token found:", getTokenFromStorage());
-      const token = getTokenFromStorage();
+      console.log("Token found:", getTokenFromStorage() || "No token found"); // Log if no token is found
+      const token = getTokenFromStorage() || "No token found"; // Log if no token is found
       state.token = token;
       state.isAuthenticated = !!token;
     },

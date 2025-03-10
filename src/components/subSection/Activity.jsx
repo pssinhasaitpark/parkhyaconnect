@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getColorFromName } from '../../utils/colorUtils';
 import {
   Box,
   Typography,
@@ -114,7 +115,7 @@ const NotificationsPanel = () => {
               }}
             >
               <ListItemAvatar>
-                <Avatar src={notif.avatar} />
+                <Avatar src={notif.avatar} sx={{ bgcolor: getColorFromName(notif.name) }} />
               </ListItemAvatar>
               <ListItemText
                 primary={
