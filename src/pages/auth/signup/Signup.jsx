@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { signupUser, loginUser } from '../../../redux/authSlice';
+import { signupUser, loginUser, setSelectedUser } from '../../../redux/authSlice';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Box, Typography, TextField, Button, Card, InputAdornment } from '@mui/material';
@@ -50,7 +50,8 @@ const Signup = () => {
           throw new Error(loginResult.error.message || 'Login failed. Please try again.');
         }
 
-        // Save token and redirect to the dashboard
+        // Save token, set selected user, and redirect to the dashboard
+        dispatch(setSelectedUser(signupResult.payload.user)); // Dispatch setSelectedUser with user data
         const token = loginResult.payload?.data?.token; // Safe access to token
         if (token) {
           localStorage.setItem('token', token);
