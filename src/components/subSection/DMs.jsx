@@ -3,7 +3,6 @@ import { TextField, IconButton, Badge, Switch, Divider } from "@mui/material";
 import { getColorFromName } from '../../utils/colorUtils';
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers, fetchSelectedUser, updateUserStatus } from "../../redux/authSlice";
-import { io } from "socket.io-client";
 import {
   Box,
   Typography,
@@ -15,14 +14,12 @@ import {
 } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
-import UserChatUI from "./UserChatUI";
+import DMInterface from "../ChatBox/DMInterface";
 
-const socket = io("http://192.168.0.152:8000"); // Replace with your backend URL
 
 const DMs = () => { 
   const [showUnread, setShowUnread] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [message, setMessage] = useState("");
   const dispatch = useDispatch();
   const { users, loading, error, selectedUser } = useSelector((state) => state.auth);
 
@@ -31,23 +28,11 @@ const DMs = () => {
   }, [dispatch]);
 
 
-  useEffect(() => {
-    socket.on("user_online", (userId) => {
-      dispatch(updateUserStatus({ userId, isOnline: true }));
-    });
 
-    socket.on("user_offline", (userId) => {
-      dispatch(updateUserStatus({ userId, isOnline: false }));
-    });
 
-    return () => {
-      socket.off("user_online");
-      socket.off("user_offline");
-    };
-  }, [dispatch]);
-
-  const handleUserSelect = async (user) => {
-    await dispatch(fetchSelectedUser(user.id)).unwrap();
+const handleUserSelect = async (user) => {
+  const result = await dispatch(fetchSelectedUser(user.id)).unwrap();
+  console.log("Selected User:", result);
   };
 
   const filteredUsers = (users || []).filter((user) =>
@@ -162,8 +147,7 @@ const DMs = () => {
         </Box>
       </Box>
 
-      {/* Right side chat area (Sliding in effect) */}
-      <Box sx={{
+      {/* <Box sx={{
         flex: 1, 
         display: "flex", 
         position: "relative",
@@ -173,27 +157,24 @@ const DMs = () => {
         bgcolor: "#1E1E1E",
         zIndex: selectedUser ? 1 : 0,
       }}>
-        {selectedUser ? (
-          <UserChatUI 
-            id={selectedUser.id} 
-            selectedUser={selectedUser} 
-            selectedChannel={null} 
-          />
-        ) : (
-          <Box 
-            sx={{ 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center", 
-              width: "100%",
-              bgcolor: "#1E1E1E", 
-              color: "white" 
-            }}
-          >
-            <Typography variant="h6">Select a conversation to start chatting</Typography>
-          </Box>
-        )}
-      </Box>
+        <DMInterface selectedUser={selectedUser} selectedChannel={null} />
+      </Box>   */}
+      <Box sx={{
+  flex: 1, 
+  display: "flex", 
+  position: selectedUser ? "fixed" : "relative",
+  // transition: "all 0.5s ease", 
+  transform: selectedUser ? "translateX(0)" : "translateX(100%)",
+  width: "calc(100% - 420px)",  
+  bgcolor: "#1E1E1E",
+  zIndex: selectedUser ? 1 : 0,
+
+  right: 0,
+  top: 0,
+  height: "100vh"
+}}>
+  {selectedUser && <DMInterface selectedUser={selectedUser} selectedChannel={null} />}
+</Box>
     </Box>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { getColorFromName } from "../../utils/colorUtils"; // Import the color utility function
+import { getColorFromName } from "../../utils/colorUtils"; 
 
-import { fetchMessages, clearMessages } from "../../redux/messagesSlice"; // Import fetchMessages and clearMessages
+import { fetchMessages, clearMessages } from "../../redux/messagesSlice"; 
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../redux/authSlice";
 import { fetchChannels } from "../../redux/channelsSlice";
@@ -20,10 +20,11 @@ import { ExpandLess, ExpandMore, Add, Tag } from "@mui/icons-material";
 import ChannelPopup from "../../components/ChatBox/ChannelPopup";
 
 const Home = ({ onUserSelect }) => {
-  const dispatch = useDispatch(); // Add dispatch
+  const dispatch = useDispatch(); 
   const [channelsOpen, setChannelsOpen] = useState(false);
   const [dmsOpen, setDmsOpen] = useState(false);
   const [openChannelPopup, setOpenChannelPopup] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null); // State to manage selected user
 
   const { users, loading: usersLoading } = useSelector((state) => state.auth);
   const { channels, loading: channelsLoading } = useSelector((state) => state.channels);
@@ -43,6 +44,16 @@ const Home = ({ onUserSelect }) => {
 
   const handleChannelSelect = (channelId, channelName) => {
     console.log(`Selected channel: ${channelName} (${channelId})`);
+    // Logic to open DMInterface
+    // Set state or navigate to DMInterface
+  };
+
+  const handleUserSelect = (user) => {
+    console.log(`User clicked: ${user.id}`);
+    dispatch(fetchMessages({ userId: user.id }));
+    dispatch(clearMessages()); 
+    setSelectedUser(user); // Set selected user
+    onUserSelect(user); 
   };
 
   return (
@@ -118,14 +129,7 @@ const Home = ({ onUserSelect }) => {
                   button
                   key={user.id}
                   sx={{ pl: 2 }}
-                    onClick={() => {
-                      console.log(`User clicked: ${user.id}`); // Debugging log
-                      dispatch(fetchMessages({ userId: user.id })); // Fetch messages for the selected user
-                      dispatch(clearMessages()); // Clear previous messages
-                      dispatch(clearMessages()); // Clear previous messages
-                      onUserSelect(user); // Call onUserSelect
-                    }}
-
+                  onClick={() => handleUserSelect(user)} 
                 >
                   <ListItemIcon>
                     <Avatar sx={{ width: 24, height: 24, bgcolor: getColorFromName(user.fullName) }}>
@@ -148,23 +152,6 @@ const Home = ({ onUserSelect }) => {
                       }}
                     />
                   )}
-                  {user.notifications > 0 && (
-                    <Box
-                      sx={{
-                        bgcolor: "red",
-                        color: "white",
-                        borderRadius: "50%",
-                        width: 20,
-                        height: 20,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {user.notifications}
-                    </Box>
-                  )}
                 </ListItem>
               ))
             ) : (
@@ -183,6 +170,23 @@ const Home = ({ onUserSelect }) => {
       </List>
 
       <ChannelPopup open={openChannelPopup} handleClose={handleCloseChannelPopup} />
+    
+{/* <Box sx={{
+  flex: 1, 
+  display: "flex", 
+  position: "relative",
+  transition: "all 0.5s ease", 
+  transform: selectedUser ? "translateX(0)" : "translateX(100%)",
+  width: "calc(100% - 320px)",  
+  bgcolor: "#1E1E1E",
+  zIndex: selectedUser ? 1 : 0,
+  position: "fixed",
+  right: 0,
+  top: 0,
+  height: "100vh"
+}}>
+  {selectedUser && <DMInterface selectedUser={selectedUser} selectedChannel={null} />}
+</Box> */}
     </Box>
   );
 };

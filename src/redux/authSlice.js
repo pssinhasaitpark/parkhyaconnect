@@ -31,35 +31,13 @@ const getTokenFromStorage = () => {
 const initialState = {
   users: [],
   selectedUser: null,
+  currentUser: null, // Add currentUser to store logged-in user
   isAuthenticated: false,
-  token: null,
+  token: getTokenFromStorage(),  // Initialize token from localStorage
   messages: [],
   loading: false,
   error: null,
 };
-
-// Login Thunk
-export const loginUser = createAsyncThunk(
-  "auth/loginUser",
-  async (credentials, { rejectWithValue }) => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
-      const token = response?.data?.token || response?.data?.data?.token || response?.data?.user?.token;
-      console.log("Token received:", token); // Log the token for debugging
-      console.log("Token received:", token); // Log the token for debugging
-
-      if (token) {
-        saveTokenToStorage(token);
-        return { ...response.data, token };
-      } else {
-        return rejectWithValue("No token received from server. Check API response format. Please ensure the API is returning the expected data.");
-      }
-    } catch (error) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Login failed due to an unexpected error.";
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
 
 // Signup Thunk
 export const signupUser = createAsyncThunk(
@@ -78,13 +56,30 @@ export const signupUser = createAsyncThunk(
   }
 );
 
+// Login Thunk
+export const loginUser = createAsyncThunk(
+  "auth/loginUser",
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
+      const token = response?.data?.token || response?.data?.data?.token || response?.data?.user?.token;
+      if (token) {
+        saveTokenToStorage(token);
+      }
+      return { ...response.data, token };
+    } catch (error) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Login failed due to an unexpected error.";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 // Fetch Users Thunk
 export const fetchUsers = createAsyncThunk(
   "auth/fetchUsers",
   async (_, { rejectWithValue, getState }) => {
     try {
-      const token = getState().auth.token || getTokenFromStorage(); 
-      console.log("Using token for fetch:", token); // Log the token being used
+      const token = getState().auth.token || getTokenFromStorage();
       if (!token) {
         return rejectWithValue("No authentication token found");
       }
@@ -112,11 +107,16 @@ export const fetchSelectedUser = createAsyncThunk(
       if (!token) {
         return rejectWithValue("No authentication token found");
       }
+
       const response = await axios.get(`${API_BASE_URL}/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data;
-      
+
+      // Log the response structure to inspect what is returned
+      console.log("Response data:", response.data.data); // Log the actual user data
+
+      // Assuming that response.data contains another `data` field which holds the actual user data
+      return response.data.data; // Return the actual user data from the response
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch user details");
     }
@@ -203,9 +203,7 @@ const authSlice = createSlice({
       }
     },
     initializeAuth: (state) => {
-      console.log("Initializing authentication...");
-      console.log("Token found:", getTokenFromStorage() || "No token found"); // Log if no token is found
-      const token = getTokenFromStorage() || "No token found"; // Log if no token is found
+      const token = getTokenFromStorage();
       state.token = token;
       state.isAuthenticated = !!token;
     },
@@ -226,6 +224,7 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.selectedUser = null;
+      state.currentUser = null; 
       localStorage.removeItem("token");
     },
     clearError(state) {
@@ -240,9 +239,10 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload && action.payload.token) {
+        if (action.payload && action.payload.token && action.payload.user) {
           state.token = action.payload.token;
           state.isAuthenticated = true;
+          state.currentUser = action.payload.user; // Store the logged-in user
           saveTokenToStorage(action.payload.token);
         }
       })
@@ -329,9 +329,7 @@ const authSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload) {
-          state.messages = [...state.messages, action.payload];
-        }
+        state.messages = [...state.messages, action.payload];
       })
       .addCase(sendMessage.rejected, (state, action) => {
         state.loading = false;
@@ -340,6 +338,7 @@ const authSlice = createSlice({
   },
 });
 
-// Export actions and reducer
 export const { initializeAuth, setSelectedUser, setToken, logout, clearError, updateUserStatus } = authSlice.actions;
 export default authSlice.reducer;
+
+
