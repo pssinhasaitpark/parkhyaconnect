@@ -1,15 +1,28 @@
-import React from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { Popover, Avatar, Box, Typography, Divider, List, ListItem, ListItemText } from "@mui/material";
+import { fetchMessages } from "../../redux/messagesSlice";
+import { useDispatch } from "react-redux";
 
 const UserMenu = ({ anchorEl, onClose, logoutUser, selectedUser }) => {
-  const navigate = useNavigate(); // Initialize useNavigate
+  const dispatch = useDispatch();
+  const navigate = useNavigate(); 
   const open = Boolean(anchorEl);
 
   const handleLogout = () => {
-    logoutUser(); // Call the logout function passed as a prop
-    navigate('/login'); // Redirect to the login page after logout (or dashboard if needed)
+    logoutUser(); 
+    navigate('/login'); 
   };
+
+
+  useEffect(() => {
+    if (selectedUser) {
+      dispatch(fetchMessages({ userId: selectedUser.id }));
+    }
+  }, [selectedUser, dispatch]);
+
+  console.log(">>>>>>>>>>>>>>>>>>>>>>>", selectedUser);
+  
 
   return (
     <Popover
@@ -35,6 +48,8 @@ const UserMenu = ({ anchorEl, onClose, logoutUser, selectedUser }) => {
         },
       }}
     >
+      {console.log("dfgdffsdsgasdfgsfsd",)}
+      
       <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1 }}>
         <Avatar sx={{ bgcolor: "#aaa", color: "black" }}>PS</Avatar>
         <Box>
@@ -68,6 +83,7 @@ const UserMenu = ({ anchorEl, onClose, logoutUser, selectedUser }) => {
           <ListItemText primary="Sign out of Parkhya Solutions" sx={{ color: "red" }} />
         </ListItem>
       </List>
+      
     </Popover>
   );
 };

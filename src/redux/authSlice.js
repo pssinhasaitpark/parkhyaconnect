@@ -27,11 +27,21 @@ const getTokenFromStorage = () => {
   }
 };
 
+// const getCurrentUserFromStorage = () => {
+//   try {
+//     const user = localStorage.getItem("user");
+//     return user ? JSON.parse(user) : null;
+//   } catch (error) {
+//     console.error("Error retrieving user from localStorage:", error);
+//     return null;
+//   }
+// };
+
 // Initial state with safer token retrieval
 const initialState = {
   users: [],
   selectedUser: null,
-  currentUser: null, // Add currentUser to store logged-in user
+  currentUser: "e0643f7b-41a2-463d-864e-c778159cd0bc", 
   isAuthenticated: false,
   token: getTokenFromStorage(),  // Initialize token from localStorage
   messages: [],
@@ -91,6 +101,7 @@ export const fetchUsers = createAsyncThunk(
         id: user.id,
         fullName: user.fullName,
         avatar: user.avatar,
+        joinedAt: user.created_at,
       }));
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch users");
@@ -98,7 +109,7 @@ export const fetchUsers = createAsyncThunk(
   }
 );
 
-// Fetch Selected User Thunk
+
 export const fetchSelectedUser = createAsyncThunk(
   "auth/fetchSelectedUser",
   async (id, { rejectWithValue, getState }) => {
@@ -112,11 +123,9 @@ export const fetchSelectedUser = createAsyncThunk(
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Log the response structure to inspect what is returned
-      console.log("Response data:", response.data.data); // Log the actual user data
+      console.log("Response data:", response.data.data); 
 
-      // Assuming that response.data contains another `data` field which holds the actual user data
-      return response.data.data; // Return the actual user data from the response
+      return response.data.data; 
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch user details");
     }
@@ -190,7 +199,7 @@ export const sendMessage = createAsyncThunk(
   }
 );
 
-// Create the auth slice
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -238,14 +247,29 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.loading = false;
-        if (action.payload && action.payload.token && action.payload.user) {
-          state.token = action.payload.token;
-          state.isAuthenticated = true;
-          state.currentUser = action.payload.user; // Store the logged-in user
-          saveTokenToStorage(action.payload.token);
+        console.log("Login API Response:", action.payload);
+    
+        if (!action.payload || !action.payload.token || !action.payload.user) {
+            console.error("Login API response missing user data!", action.payload);
+            return;
         }
-      })
+    
+        state.loading = false;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+        state.currentUser = action.payload.user;
+    
+        saveTokenToStorage(action.payload.token);
+        
+        try {
+            localStorage.setItem("user", JSON.stringify(action.payload.user));
+        } catch (error) {
+            console.error("Error saving user to localStorage:", error);
+        }
+    })
+    
+     
+      
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
