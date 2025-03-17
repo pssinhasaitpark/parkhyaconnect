@@ -3,17 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { Popover, Avatar, Box, Typography, Divider, List, ListItem, ListItemText } from "@mui/material";
 import { fetchMessages } from "../../redux/messagesSlice";
 import { useDispatch } from "react-redux";
+import { logout } from "../../redux/authSlice"; 
 
-const UserMenu = ({ anchorEl, onClose, logoutUser, selectedUser }) => {
+const UserMenu = ({ anchorEl, onClose, selectedUser }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate(); 
   const open = Boolean(anchorEl);
 
   const handleLogout = () => {
-    logoutUser(); 
-    navigate('/login'); 
+    dispatch(logout()); 
+    navigate('/login');  
   };
-
 
   useEffect(() => {
     if (selectedUser) {
@@ -21,8 +21,7 @@ const UserMenu = ({ anchorEl, onClose, logoutUser, selectedUser }) => {
     }
   }, [selectedUser, dispatch]);
 
-  console.log(">>>>>>>>>>>>>>>>>>>>>>>", selectedUser);
-  
+  console.log("Selected User: ", selectedUser);
 
   return (
     <Popover
@@ -48,8 +47,6 @@ const UserMenu = ({ anchorEl, onClose, logoutUser, selectedUser }) => {
         },
       }}
     >
-      {console.log("dfgdffsdsgasdfgsfsd",)}
-      
       <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1 }}>
         <Avatar sx={{ bgcolor: "#aaa", color: "black" }}>PS</Avatar>
         <Box>
@@ -83,7 +80,6 @@ const UserMenu = ({ anchorEl, onClose, logoutUser, selectedUser }) => {
           <ListItemText primary="Sign out of Parkhya Solutions" sx={{ color: "red" }} />
         </ListItem>
       </List>
-      
     </Popover>
   );
 };
