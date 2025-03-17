@@ -44,7 +44,7 @@ const handleSectionClick = (section) => {
   };
 
   const handleUserClick = (event) => {
-    setUserAnchorEl(event.currentTarget); // Open UserMenu
+    setUserAnchorEl(event.currentTarget); 
   };
 
   const handleUserClose = () => {
@@ -161,7 +161,7 @@ const renderSection = () => {
                 bgcolor: "rgba(255, 255, 255, 0.1)",
               },
             }}
-            onClick={handleUserClick} // Open UserMenu
+            onClick={handleUserClick} 
           >
             <Person fontSize="large" />
           </IconButton>

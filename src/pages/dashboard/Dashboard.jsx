@@ -5,6 +5,7 @@ import Sidebar from "../../components/sidebar/Sidebar";
 import { Box, IconButton, Typography } from "@mui/material";
 import { Message } from "@mui/icons-material";
 import DMInterface from "../../components/ChatBox/DMInterface";
+import DMInterface2 from "../../components/ChatBox/DMInterface2";
 
 const Dashboard = () => {
   const [selectedUser, setSelectedUser] = useState(null); 
@@ -24,10 +25,22 @@ const Dashboard = () => {
       {/* Sidebar and Main Content */}
       <Box sx={{ display: "flex", flexGrow: 1, marginTop: "64px", height: "calc(100vh - 64px)" }}>
         <Sidebar onUserSelect={handleUserSelect} />
+           {/* <Box sx={{
+                flex: 1, 
+                display: "flex", 
+                position: "relative",
+                transition: "all 0.5s ease", 
+                transform: selectedUser ? "translateX(0)" : "translateX(100%)",
+                width: "100%",
+                bgcolor: "#1E1E1E",
+                zIndex: selectedUser ? 1 : 0,
+              }}>
+                <DMInterface selectedUser={selectedUser} selectedChannel={null} />
+              </Box>   */}
 
-        {/* <Box sx={{ flexGrow: 1, height: "100%", display: "flex", paddingLeft: "18%", justifyContent: "center", alignItems: "center" }}>
+        <Box sx={{ flexGrow: 1, height: "100%", display: "flex", paddingLeft: "18%", justifyContent: "center", alignItems: "center" }}>
           {selectedUser ? (
-            <DMInterface user={selectedUser} />
+            <DMInterface selectedUser={selectedUser} selectedChannel={null} />
           ) : (
             <Box sx={{ textAlign: "center" }}>
               <IconButton sx={{ color: "black", fontSize: 50, marginBottom: "20px" }}>
@@ -38,7 +51,7 @@ const Dashboard = () => {
               </Typography>
             </Box>
           )}
-        </Box> */}
+        </Box>
       </Box>
     </Box>
   );
