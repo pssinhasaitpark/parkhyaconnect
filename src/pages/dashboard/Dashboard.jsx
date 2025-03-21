@@ -5,7 +5,6 @@ import Sidebar from "../../components/sidebar/Sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { Message } from "@mui/icons-material";
 import DMInterface from "../../components/ChatBox/DMInterface";
-import DMInterface2 from "../../components/ChatBox/DMInterface2";
 
 const Dashboard = () => {
   const [selectedUser, setSelectedUser] = useState(null); 

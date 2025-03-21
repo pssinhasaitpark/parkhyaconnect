@@ -22,25 +22,21 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [initDone, setInitDone] = useState(false);
 
-  // Initialize auth state at startup
   useEffect(() => {
     dispatch(initializeAuth());
     setInitDone(true);
   }, [dispatch]);
 
-  // Debug log for initial auth state
   useEffect(() => {
     console.log("Auth state:", { isAuthenticated, token, initDone });
     console.log("Stored token:", localStorage.getItem("token"));
   }, [isAuthenticated, token, initDone]);
 
-  // Validation schema using Yup
   const validationSchema = Yup.object({
     email: Yup.string().email('Enter a valid email').required('Email is required'),
     password: Yup.string().min(8, 'Password should be at least 8 characters').required('Password is required'),
   });
 
-  // Formik setup for handling form data and submission
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -59,27 +55,21 @@ const Login = () => {
         if (loginUser.fulfilled.match(resultAction)) {
           console.log("Login response:", resultAction.payload);
           
-          // Check if we got a token
           if (resultAction.payload && resultAction.payload.token) {
             console.log("Token received:", resultAction.payload.token);
             
-            // The token is already saved in localStorage by the thunk
-            // Let's verify it was saved correctly
             const storedToken = localStorage.getItem("token");
             console.log("Verification - token in localStorage:", storedToken);
             
             if (storedToken !== resultAction.payload.token) {
-              // If there's a mismatch, try setting it directly
               console.log("Token mismatch detected, setting manually");
               localStorage.setItem("token", resultAction.payload.token);
               
-              // Also update Redux state directly
               dispatch(setToken(resultAction.payload.token));
             }
             
+         
             toast.success('Login successful!');
-            
-            // Short timeout to ensure state is updated before navigation
             setTimeout(() => {
               navigate('/dashboard');
             }, 100);
@@ -97,7 +87,6 @@ const Login = () => {
     },
   });
 
-  // Check for authentication changes - only navigate after initialization
   useEffect(() => {
     if (initDone && isAuthenticated && token) {
       console.log("Redirecting to dashboard. Token:", token);
@@ -105,7 +94,6 @@ const Login = () => {
     }
   }, [isAuthenticated, token, navigate, initDone]);
 
-  // Handle errors
   useEffect(() => {
     if (error) {
       toast.error(error);
@@ -117,14 +105,11 @@ const Login = () => {
       const token = response.credential;
       console.log("Google token received:", token);
       
-      // First save to localStorage directly
       localStorage.setItem('token', token);
       
-      // Then update Redux with a small delay to ensure localStorage has been updated
       setTimeout(() => {
         dispatch(setToken(token));
         
-        // Verify it was saved
         const storedToken = localStorage.getItem("token");
         console.log("Google login token verification:", {
           original: token,
@@ -155,7 +140,7 @@ const Login = () => {
       }}
     >
       <Card sx={{ width: '100%', maxWidth: '560px', padding: 3, borderRadius: '12px', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
-        <ToastContainer /> {/* Toast notifications */}
+      
 
         <Box display="flex" justifyContent="center" marginBottom={3}>
           <img

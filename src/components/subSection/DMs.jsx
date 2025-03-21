@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
-// import DMInterface from "../ChatBox/DMInterface";
 import DMInterface from "../ChatBox/DMInterface";
 
 
@@ -148,23 +147,11 @@ const handleUserSelect = async (user) => {
         </Box>
       </Box>
 
-      {/* <Box sx={{
-        flex: 1, 
-        display: "flex", 
-        position: "relative",
-        transition: "all 0.5s ease", 
-        transform: selectedUser ? "translateX(0)" : "translateX(100%)",
-        width: "100%",
-        bgcolor: "#1E1E1E",
-        zIndex: selectedUser ? 1 : 0,
-      }}>
-        <DMInterface selectedUser={selectedUser} selectedChannel={null} />
-      </Box>   */}
+  
       <Box sx={{
   flex: 1, 
   display: "flex", 
   position: selectedUser ? "fixed" : "relative",
-  // transition: "all 0.5s ease", 
   transform: selectedUser ? "translateX(0)" : "translateX(100%)",
   width: "calc(100% - 420px)",  
   bgcolor: "#1E1E1E",

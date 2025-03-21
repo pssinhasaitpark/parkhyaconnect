@@ -88,19 +88,15 @@ const renderSection = () => {
       >
         {/* Profile Avatar */}
         <Box sx={{ textAlign: "center", mb: 3 }}>
-          <Avatar sx={{ bgcolor: "#aaa", color: "black" }}>PS</Avatar>
+          <Avatar 
+            src={selectedUser && selectedUser.avatar ? selectedUser.avatar : undefined} 
+            sx={{ bgcolor: selectedUser && selectedUser.avatar ? undefined : "#aaa", color: "black" }}
+          >
+            {!selectedUser || !selectedUser.avatar ? (selectedUser && selectedUser.name ? selectedUser.name.charAt(0) : null) : null}
+          </Avatar>
         </Box>
 
-      {/* <List>
-        {users.map((user) => (
-          <ListItem button key={user.id} onClick={() => onUserSelect(user)}>
-            <ListItemIcon>
-              <Avatar src={user.avatar} />
-            </ListItemIcon>
-            <ListItemText primary={user.fullName || user.name} />
-          </ListItem>
-        ))}
-      </List> */}
+    
 
       {/* Navigation Icons */}
         <List sx={{ width: "100%", marginTop: "16px" }}>
