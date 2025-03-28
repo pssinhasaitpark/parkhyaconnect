@@ -12,7 +12,6 @@ const saveTokenToStorage = (token) => {
     }
     return false;
   } catch (error) {
-    console.error("Error saving token to localStorage:", error);
     return false;
   }
 };
@@ -22,32 +21,42 @@ const getTokenFromStorage = () => {
   try {
     return localStorage.getItem("token");
   } catch (error) {
-    console.error("Error retrieving token from localStorage:", error);
     return null;
   }
 };
 
-// const getCurrentUserFromStorage = () => {
-//   try {
-//     const user = localStorage.getItem("user");
-//     return user ? JSON.parse(user) : null;
-//   } catch (error) {
-//     console.error("Error retrieving user from localStorage:", error);
-//     return null;
-//   }
-// };
-
-// Initial state with safer token retrieval
 const initialState = {
   users: [],
   selectedUser: null,
-  currentUser: "e0643f7b-41a2-463d-864e-c778159cd0bc", 
+  currentUser: null,
+  userDetails: null,
   isAuthenticated: false,
-  token: getTokenFromStorage(),  // Initialize token from localStorage
+  token: getTokenFromStorage(),
   messages: [],
   loading: false,
   error: null,
 };
+
+// Fetch User Details Thunk
+export const fetchUserDetails = createAsyncThunk(
+  "auth/fetchUserDetails",
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().auth.token || getTokenFromStorage();
+      if (!token) {
+        return rejectWithValue("No authentication token found. Please log in.");
+      }
+      const response = await axios.get(`${API_BASE_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      // Return user details
+      return response.data.data; 
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch user details. Please try again.");
+    }
+  }
+);
 
 // Signup Thunk
 export const signupUser = createAsyncThunk(
@@ -96,20 +105,23 @@ export const fetchUsers = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      // Assuming the API response includes lastMessage, lastMessageTime, and unseenCount
       return response.data.data.users.map((user) => ({
         isOnline: user.isOnline,
         id: user.id,
         fullName: user.fullName,
         avatar: user.avatar,
         joinedAt: user.created_at,
+        lastMessage: user.lastMessage || "", // Add last message
+        lastMessageTime: user.lastMessageTime || "", // Add last message time
+        unseenCount: user.unseenCount || 0, // Add unseen message count
       }));
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch users");
     }
   }
 );
-
-
 export const fetchSelectedUser = createAsyncThunk(
   "auth/fetchSelectedUser",
   async (id, { rejectWithValue, getState }) => {
@@ -123,7 +135,6 @@ export const fetchSelectedUser = createAsyncThunk(
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("Response data:", response.data.data); 
 
       return response.data.data; 
     } catch (error) {
@@ -131,7 +142,6 @@ export const fetchSelectedUser = createAsyncThunk(
     }
   }
 );
-
 
 // Fetch Messages Thunk
 export const fetchMessages = createAsyncThunk(
@@ -199,7 +209,6 @@ export const sendMessage = createAsyncThunk(
   }
 );
 
-
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -233,43 +242,69 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.selectedUser = null;
-      state.currentUser = null; 
+      state.currentUser = null;
+      state.userDetails = null; // Also clear userDetails
       localStorage.removeItem("token");
+      localStorage.removeItem("user"); // Also remove user from localStorage
     },
     clearError(state) {
       state.error = null;
     },
+    // Add a dedicated action to update currentUser
+    updateCurrentUser(state, action) {
+      state.currentUser = action.payload;
+      // Save to localStorage
+      try {
+        localStorage.setItem("user", JSON.stringify(action.payload));
+      } catch (error) {
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
+      // Handling fetchUserDetails
+      .addCase(fetchUserDetails.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchUserDetails.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userDetails = action.payload;
+        state.currentUser = action.payload; // Update currentUser with data from auth/me
+        state.isAuthenticated = true;
+        
+        // Save to localStorage for persistence
+        try {
+          localStorage.setItem("user", JSON.stringify(action.payload));
+        } catch (error) {
+        }
+      })
+      .addCase(fetchUserDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        console.log("Login API Response:", action.payload);
     
         if (!action.payload || !action.payload.token || !action.payload.user) {
-            console.error("Login API response missing user data!", action.payload);
-            return;
+          return;
         }
     
         state.loading = false;
         state.token = action.payload.token;
         state.isAuthenticated = true;
         state.currentUser = action.payload.user;
+        state.userDetails = action.payload.user; // Also set userDetails
     
         saveTokenToStorage(action.payload.token);
         
         try {
-            localStorage.setItem("user", JSON.stringify(action.payload.user));
+          localStorage.setItem("user", JSON.stringify(action.payload.user));
         } catch (error) {
-            console.error("Error saving user to localStorage:", error);
         }
-    })
-    
-     
-      
+      })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -286,6 +321,17 @@ const authSlice = createSlice({
           state.token = action.payload.token;
           state.isAuthenticated = true;
           saveTokenToStorage(action.payload.token);
+          
+          // If user data is included in the response, update it
+          if (action.payload.user) {
+            state.currentUser = action.payload.user;
+            state.userDetails = action.payload.user;
+            
+            try {
+              localStorage.setItem("user", JSON.stringify(action.payload.user));
+            } catch (error) {
+            }
+          }
         }
       })
       .addCase(signupUser.rejected, (state, action) => {
@@ -362,7 +408,14 @@ const authSlice = createSlice({
   },
 });
 
-export const { initializeAuth, setSelectedUser, setToken, logout, clearError, updateUserStatus } = authSlice.actions;
+export const { 
+  initializeAuth, 
+  setSelectedUser, 
+  setToken, 
+  logout, 
+  clearError, 
+  updateUserStatus,
+  updateCurrentUser
+} = authSlice.actions;
+
 export default authSlice.reducer;
-
-

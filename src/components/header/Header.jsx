@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { AppBar, Toolbar, InputBase, Box, Button, IconButton } from "@mui/material";
 import { Search, QuestionMark, ArrowBack, ArrowForward, AccessTime } from "@mui/icons-material";
-import SlackProPopup from "../subSection/ProVersion"; 
+import SlackProPopup from "../subSection/ProVersion";
 
 const Header = () => {
   const [open, setOpen] = useState(false);
@@ -26,13 +26,13 @@ const Header = () => {
             <AccessTime />
           </IconButton>
 
-          <Button 
-            variant="contained" 
-            color="secondary" 
-            sx={{ ml: 2, backgroundColor: "#9146ff" }} 
+          <Button
+            variant="contained"
+            color="secondary"
+            sx={{ ml: 2, backgroundColor: "#9146ff" }}
             onClick={() => setOpen(true)}
           >
-            Slack Pro 
+            Slack Pro
           </Button>
 
           <IconButton color="inherit">

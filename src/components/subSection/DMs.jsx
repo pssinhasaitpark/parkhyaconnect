@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { TextField, IconButton, Badge, Switch, Divider } from "@mui/material";
-import { getColorFromName } from '../../utils/colorUtils';
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers, fetchSelectedUser, updateUserStatus } from "../../redux/authSlice";
+import { useLocation, useNavigate } from "react-router-dom";
+import { fetchUsers, fetchSelectedUser  } from "../../redux/authSlice";
 import {
   Box,
   Typography,
@@ -11,29 +10,53 @@ import {
   ListItemAvatar,
   Avatar,
   ListItemText,
+  IconButton,
+  Badge,
+  Divider,
+  TextField,
+  Switch,
 } from "@mui/material";
-import SearchIcon from '@mui/icons-material/Search';
-import EditIcon from '@mui/icons-material/Edit';
-// import DMInterface from "../ChatBox/DMInterface";
+import { getColorFromName } from "../../utils/colorUtils";
+import SearchIcon from "@mui/icons-material/Search";
+import EditIcon from "@mui/icons-material/Edit";
 import DMInterface from "../ChatBox/DMInterface";
 
-
-const DMs = () => { 
+const DMs = () => {
   const [showUnread, setShowUnread] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const dispatch = useDispatch();
-  const { users, loading, error, selectedUser } = useSelector((state) => state.auth);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { users, selectedUser  } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchUsers());
-  }, [dispatch]);
+    const queryParams = new URLSearchParams(location.search);
+    const userId = queryParams.get("userId");
+    if (userId) {
+      dispatch(fetchSelectedUser (userId));
+    }
+  }, [dispatch, location.search]);
 
+  const handleUserSelect = async (user) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("userId", user.id); 
+    navigate({
+      pathname: window.location.pathname,
+      search: searchParams.toString(),
+    });
+    // Fetch the selected user
+    const result = await dispatch(fetchSelectedUser (user.id)).unwrap();
+    console.log("Selected User:", result);
+  };
 
-
-
-const handleUserSelect = async (user) => {
-  const result = await dispatch(fetchSelectedUser(user.id)).unwrap();
-  console.log("Selected User:", result);
+  const handleCloseDMInterface = () => {
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.delete("userId");
+    navigate({
+      pathname: window.location.pathname,
+      search: searchParams.toString(),
+    });
   };
 
   const filteredUsers = (users || []).filter((user) =>
@@ -41,12 +64,12 @@ const handleUserSelect = async (user) => {
   );
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", width: "100%" }}> 
+    <Box sx={{ display: "flex", height: "100vh", width: "100%" }}>
       {/* Left sidebar for DM list */}
       <Box
         sx={{
           width: 320,
-          bgcolor: "#290b2c",
+          bgcolor: "#290B2C",
           color: "white",
           display: "flex",
           flexDirection: "column",
@@ -64,7 +87,7 @@ const handleUserSelect = async (user) => {
           <Box
             display="flex"
             alignItems="center"
-            bgcolor="#3b1e3d"
+            bgcolor="#3B1E3D"
             borderRadius="4px"
             padding="4px"
             mt={1}
@@ -88,7 +111,7 @@ const handleUserSelect = async (user) => {
             <Switch checked={showUnread} onChange={() => setShowUnread(!showUnread)} />
           </Box>
         </Box>
-        <Divider sx={{ bgcolor: "#3b1e3d", my: 2 }} />
+        <Divider sx={{ bgcolor: "#3B1E3D", my: 2 }} />
         <Box sx={{ overflowY: "auto", flex: 1 }}>
           <List>
             {filteredUsers.length > 0 ? (
@@ -100,8 +123,8 @@ const handleUserSelect = async (user) => {
                     borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
                     display: showUnread && user.unread === 0 ? "none" : "flex",
                     alignItems: "center",
-                    "&:hover": { bgcolor: "#3b1e3d", cursor: "pointer" },
-                    bgcolor: selectedUser?.id === user.id ? "#3b1e3d" : "transparent",
+                    "&:hover": { bgcolor: "#3B1E3D", cursor: "pointer" },
+                    bgcolor: selectedUser ?.id === user.id ? "#3B1E3D" : "transparent",
                   }}
                   onClick={() => handleUserSelect(user)}
                 >
@@ -110,7 +133,10 @@ const handleUserSelect = async (user) => {
                       anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                       overlap="circular"
                     >
-                      <Avatar src={user.avatar || ""} sx={{ bgcolor: getColorFromName(user.fullName) }}>
+                      <Avatar
+                        src={user.avatar || ""}
+                        sx={{ bgcolor: getColorFromName(user.fullName) }}
+                      >
                         {user.avatar ? "" : user.fullName[0]}
                       </Avatar>
                       {user.isOnline && (
@@ -147,35 +173,24 @@ const handleUserSelect = async (user) => {
           </List>
         </Box>
       </Box>
-
-      {/* <Box sx={{
-        flex: 1, 
-        display: "flex", 
-        position: "relative",
-        transition: "all 0.5s ease", 
-        transform: selectedUser ? "translateX(0)" : "translateX(100%)",
-        width: "100%",
-        bgcolor: "#1E1E1E",
-        zIndex: selectedUser ? 1 : 0,
-      }}>
-        <DMInterface selectedUser={selectedUser} selectedChannel={null} />
-      </Box>   */}
-      <Box sx={{
-  flex: 1, 
-  display: "flex", 
-  position: selectedUser ? "fixed" : "relative",
-  // transition: "all 0.5s ease", 
-  transform: selectedUser ? "translateX(0)" : "translateX(100%)",
-  width: "calc(100% - 420px)",  
-  bgcolor: "#1E1E1E",
-  zIndex: selectedUser ? 1 : 0,
-
-  right: 0,
-  top: 0,
-  height: "100vh"
-}}>
-  {selectedUser && <DMInterface selectedUser={selectedUser} selectedChannel={null} />}
-</Box>
+      {/* Right side for DM interface */}
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          position: selectedUser  ? "fixed" : "relative",
+          transform: selectedUser  ? "translateX(0)" : "translateX(100%)",
+          width: "calc(100% - 420px)",
+          bgcolor: "#1E1E1E",
+          zIndex: selectedUser  ? 1 : 0,
+          right: 0,
+          top: 50,
+          height: "95%",
+          pt:1,
+        }}
+      >
+        {selectedUser  && <DMInterface selectedUser ={selectedUser } onClose={handleCloseDMInterface} />}
+      </Box>
     </Box>
   );
 };

@@ -2,22 +2,19 @@ import React, { useState } from "react";
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, Box, IconButton, Avatar, Popover } from "@mui/material";
 import { HomeOutlined, ChatBubbleOutline, NotificationsNone, MoreHoriz, Add, Person } from "@mui/icons-material";
 import Home from "../subSection/Home";
-import DMs from "../subSection/DMs"; // Correct import for DMs component
+import DMs from "../subSection/DMs";
 import ActivityComponent from "../subSection/Activity";
 import MoreComponent from "../subSection/More";
-import UserMenu from "../subSection/UserMenu"; // Import UserMenu
-import { useSelector } from "react-redux"; // Import useSelector
-
+import UserMenu from "../subSection/UserMenu";
+import { useSelector } from "react-redux";
 const Sidebar = ({ onUserSelect }) => {
-  const users = useSelector((state) => state.auth.users); // Retrieve users from Redux state
-  
-  const selectedUser = useSelector((state) => state.auth.selectedUser); // Retrieve selectedUser from Redux state
+  const users = useSelector((state) => state.auth.users);
+  const selectedUser = useSelector((state) => state.auth.selectedUser);
   const [selectedSection, setSelectedSection] = useState("Home");
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [moreAnchorEl, setMoreAnchorEl] = useState(null);
-  const [userAnchorEl, setUserAnchorEl] = useState(null); // State for UserMenu
-
-const handleSectionClick = (section) => {
+  const [userAnchorEl, setUserAnchorEl] = useState(null);
+  const handleSectionClick = (section) => {
     if (section === "More") {
       return;
     }
@@ -33,28 +30,23 @@ const handleSectionClick = (section) => {
     }
     setSelectedSection(section);
     setMobilePanelOpen(true);
-};
-
+  };
   const handleMoreClick = (event) => {
     setMoreAnchorEl(event.currentTarget);
   };
-
   const handleMoreClose = () => {
     setMoreAnchorEl(null);
   };
-
   const handleUserClick = (event) => {
-    setUserAnchorEl(event.currentTarget); 
+    setUserAnchorEl(event.currentTarget);
   };
-
   const handleUserClose = () => {
-    setUserAnchorEl(null); // Close UserMenu
+    setUserAnchorEl(null);
   };
-
-const renderSection = () => {
-  switch (selectedSection) {
+  const renderSection = () => {
+    switch (selectedSection) {
       case "DMs":
-        return <DMs onUserSelect={onUserSelect} />; // Render DMs component
+        return <DMs onUserSelect={onUserSelect} />;
       case "Channel":
         return <ChannelChatUI onUserSelect={onUserSelect} />;
       case "Activity":
@@ -62,9 +54,7 @@ const renderSection = () => {
       default:
         return <Home onUserSelect={onUserSelect} />;
     }
-};
-
-
+  };
   return (
     <>
       {/* Main Sidebar */}
@@ -74,7 +64,7 @@ const renderSection = () => {
           width: 72,
           "& .MuiDrawer-paper": {
             width: 72,
-            bgcolor: "#401d42",
+            bgcolor: "#401D42",
             color: "white",
             display: "flex",
             flexDirection: "column",
@@ -88,21 +78,14 @@ const renderSection = () => {
       >
         {/* Profile Avatar */}
         <Box sx={{ textAlign: "center", mb: 3 }}>
-          <Avatar sx={{ bgcolor: "#aaa", color: "black" }}>PS</Avatar>
+          <Avatar
+            src={selectedUser && selectedUser.avatar ? selectedUser.avatar : undefined}
+            sx={{ bgcolor: selectedUser && selectedUser.avatar ? undefined : "#aaa", color: "black" }}
+          >
+            {!selectedUser || !selectedUser.avatar ? (selectedUser && selectedUser.name ? selectedUser.name.charAt(0) : null) : null}
+          </Avatar>
         </Box>
-
-      {/* <List>
-        {users.map((user) => (
-          <ListItem button key={user.id} onClick={() => onUserSelect(user)}>
-            <ListItemIcon>
-              <Avatar src={user.avatar} />
-            </ListItemIcon>
-            <ListItemText primary={user.fullName || user.name} />
-          </ListItem>
-        ))}
-      </List> */}
-
-      {/* Navigation Icons */}
+        {/* Navigation Icons */}
         <List sx={{ width: "100%", marginTop: "16px" }}>
           {[
             { label: "Home", icon: <HomeOutlined /> },
@@ -115,7 +98,7 @@ const renderSection = () => {
               sx={{
                 flexDirection: "column",
                 alignItems: "center",
-                bgcolor: selectedSection === item.label ? "#57315a" : "transparent",
+                bgcolor: selectedSection === item.label ? "#57315A" : "transparent",
                 mb: 2,
               }}
               onClick={() => handleSectionClick(item.label)}
@@ -124,7 +107,6 @@ const renderSection = () => {
               <ListItemText primary={item.label} sx={{ color: "white", fontSize: "0.75rem", mt: -0.5 }} />
             </ListItem>
           ))}
-
           {/* More Button */}
           <ListItem
             button
@@ -137,7 +119,6 @@ const renderSection = () => {
             <ListItemText primary="More" sx={{ color: "white", fontSize: "0.75rem", mt: -0.5 }} />
           </ListItem>
         </List>
-
         {/* Bottom Icons */}
         <Box sx={{ textAlign: "center", mt: "auto", mb: 2 }}>
           <IconButton
@@ -161,19 +142,18 @@ const renderSection = () => {
                 bgcolor: "rgba(255, 255, 255, 0.1)",
               },
             }}
-            onClick={handleUserClick} 
+            onClick={handleUserClick}
           >
             <Person fontSize="large" />
           </IconButton>
         </Box>
       </Drawer>
-
       {/* Sub-Section Panel */}
       <Box
         sx={{
           width: 320,
           height: "100vh",
-          bgcolor: "#290b2c",
+          bgcolor: "#290B2C",
           color: "white",
           position: "fixed",
           left: 72,
@@ -184,7 +164,6 @@ const renderSection = () => {
       >
         {renderSection()}
       </Box>
-
       {/* More Popup */}
       <Popover
         open={Boolean(moreAnchorEl)}
@@ -200,7 +179,7 @@ const renderSection = () => {
         }}
         sx={{
           "& .MuiPaper-root": {
-            bgcolor: "#290b2c",
+            bgcolor: "#290B2C",
             color: "white",
             padding: 2,
             borderRadius: "8px",
@@ -214,5 +193,4 @@ const renderSection = () => {
     </>
   );
 };
-
 export default Sidebar;
