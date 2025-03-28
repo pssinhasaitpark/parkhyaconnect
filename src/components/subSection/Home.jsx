@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { getColorFromName } from "../../utils/colorUtils"; 
-import { fetchMessages, clearMessages } from "../../redux/messagesSlice"; 
+import { getColorFromName } from "../../utils/colorUtils";
+import { fetchMessages, clearMessages } from "../../redux/messagesSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../redux/authSlice";
 import { fetchChannels } from "../../redux/channelsSlice";
@@ -13,18 +13,21 @@ import {
   Collapse,
   Typography,
   Avatar,
-  CircularProgress
+  CircularProgress,
 } from "@mui/material";
-import { ExpandLess, ExpandMore, Add, Tag } from "@mui/icons-material";
+import { ExpandLess, ExpandMore, Add, Tag, Lock } from "@mui/icons-material";
 import ChannelPopup from "../../components/ChatBox/ChannelPopup";
+import ChannelChatUI from "../../components/ChatBox/ChannelChatUI"; 
 
 const Home = ({ onUserSelect }) => {
-  const dispatch = useDispatch(); 
-  const [channelsOpen, setChannelsOpen] = useState(false);
-  const [dmsOpen, setDmsOpen] = useState(false);
+  const dispatch = useDispatch();
+  const [openSections, setOpenSections] = useState({
+    channels: false,
+    dms: false,
+  });
   const [openChannelPopup, setOpenChannelPopup] = useState(false);
-  const [activeChatUserId, setActiveChatUserId] = useState(null); // Track active chat by user ID
-
+  const [activeChatUserId, setActiveChatUserId] = useState(null);
+  const [selectedChannel, setSelectedChannel] = useState(null); // State for the selected channel
   const { users, loading: usersLoading } = useSelector((state) => state.auth);
   const { channels, loading: channelsLoading } = useSelector((state) => state.channels);
 
@@ -32,7 +35,11 @@ const Home = ({ onUserSelect }) => {
     dispatch(fetchUsers());
     dispatch(fetchChannels());
   }, [dispatch]);
-  
+
+  const toggleSection = (section) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
   const handleOpenChannelPopup = () => {
     setOpenChannelPopup(true);
   };
@@ -43,20 +50,23 @@ const Home = ({ onUserSelect }) => {
 
   const handleChannelSelect = (channelId, channelName) => {
     console.log(`Selected channel: ${channelName} (${channelId})`);
-    // Logic to open DMInterface
-    // Set state or navigate to DMInterface
+    setSelectedChannel({ id: channelId, name: channelName }); // Set the selected channel
+    dispatch(fetchMessages({ channelId })); // Fetch messages for the selected channel
+    dispatch(clearMessages()); // Clear previous messages
   };
 
   const handleUserSelect = (user) => {
-    console.log(`User clicked: ${user.id}`);
+    console.log(`User  clicked: ${user.id}`);
     dispatch(fetchMessages({ userId: user.id }));
     dispatch(clearMessages());
-    setActiveChatUserId(user.id); // Set the selected user as the active chat
-    onUserSelect(user); 
+    setActiveChatUserId(user.id);
+    onUserSelect(user);
+    // Close the channel chat if it's open
+    setSelectedChannel(null);
   };
 
-  const handleCloseChat = () => {
-    setActiveChatUserId(null); // Close the active chat
+  const handleCloseChannelChat = () => {
+    setSelectedChannel(null); // Close the channel chat
   };
 
   return (
@@ -64,134 +74,126 @@ const Home = ({ onUserSelect }) => {
       sx={{
         width: 320,
         height: "100vh",
-        bgcolor: "#290b2c",
+        bgcolor: "#290B2C",
         color: "white",
         position: "fixed",
         left: 72,
         padding: 2,
       }}
     >
-      <Typography variant="h6">Parkhya Solutions</Typography>
-
+      <Typography variant="h6">ParkhyaConnect</Typography>
       {/* Channels Section */}
       <List>
-        <ListItem button onClick={() => setChannelsOpen(!channelsOpen)}>
+        <ListItem button onClick={() => toggleSection('channels')}>
           <ListItemText primary="Channels" />
-          {channelsOpen ? <ExpandLess /> : <ExpandMore />}
+          {openSections.channels ? <ExpandLess /> : <ExpandMore />}
         </ListItem>
-        <Collapse in={channelsOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {channelsLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 2 }}>
-                <CircularProgress size={24} sx={{ color: 'white' }} />
-              </Box>
-            ) : channels && channels.length > 0 ? (
-              channels.map((channel) => (
-                <ListItem 
-                  button 
-                  key={channel.id} 
-                  sx={{ pl: 2 }}
-                  onClick={() => handleChannelSelect(channel.id, channel.name)}
-                >
-                  <ListItemIcon sx={{ minWidth: 32 }}>
-                    <Tag sx={{ color: "white", fontSize: 18 }} />
-                  </ListItemIcon>
-                  <ListItemText primary={channel.name} />
-                </ListItem>
-              ))
-            ) : (
-              <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
-                No channels available.
-              </Typography>
-            )}
-            <ListItem button sx={{ pl: 2 }} onClick={handleOpenChannelPopup}>
-              <ListItemIcon>
-                <Add sx={{ color: "white" }} />
-              </ListItemIcon>
-              <ListItemText primary="Add Channel" />
-            </ListItem>
-          </List>
+        <Collapse in={openSections.channels} timeout="auto" unmountOnExit>
+          <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}> {/* Set max height and enable scrolling */}
+            <List component="div" disablePadding>
+              {channelsLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 2 }}>
+                  <CircularProgress size={24} sx={{ color: 'white' }} />
+                </Box>
+              ) : channels && channels.length > 0 ? (
+                channels.map((channel, index) => (
+                    <ListItem
+                    button={true}
+                    key={`${channel.id}-${index}`}
+
+                    sx={{ pl: 2 }}
+                    onClick={() => handleChannelSelect(channel.id, channel.name)}
+                  >
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                      <Tag sx={{ color: "white", fontSize: 18 }} />
+                    </ListItemIcon>
+                    <ListItemText primary={channel.name} />
+                    {channel.isPrivate && <Lock sx={{ color: "white", fontSize: 18, ml: 1 }} />}
+                  </ListItem>
+                ))
+              ) : (
+                <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
+                  No channels available.
+                </Typography>
+              )}
+              <ListItem button sx={{ pl: 2 }} onClick={handleOpenChannelPopup}>
+                <ListItemIcon>
+                  <Add sx={{ color: "white" }} />
+                </ListItemIcon>
+                <ListItemText primary="Add Channel" />
+              </ListItem>
+            </List>
+          </Box>
         </Collapse>
       </List>
-
       {/* Direct Messages Section */}
       <List>
-        <ListItem button onClick={() => setDmsOpen(!dmsOpen)}>
+        <ListItem button onClick={() => toggleSection('dms')}>
           <ListItemText primary="Direct Messages" />
-          {dmsOpen ? <ExpandLess /> : <ExpandMore />}
+          {openSections.dms ? <ExpandLess /> : <ExpandMore />}
         </ListItem>
-        <Collapse in={dmsOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {usersLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 2 }}>
-                <CircularProgress size={24} sx={{ color: 'white' }} />
-              </Box>
-            ) : Array.isArray(users) && users.length > 0 ? (
-              users.map((user) => (
-                <ListItem
-                  button
-                  key={user.id}
-                  sx={{ pl: 2 }}
-                  onClick={() => handleUserSelect(user)} 
-                >
-                  <ListItemIcon>
-                    <Avatar sx={{ width: 24, height: 24, bgcolor: getColorFromName(user.fullName) }}>
-                      {user?.fullName && user?.fullName.trim() !== ""
-                        ? user?.fullName[0]
-                        : "?"}
-                    </Avatar>
-                  </ListItemIcon>
-                  <ListItemText primary={user?.fullName && user?.fullName.trim()} />
-                  {user.isOnline && (
-                    <Box
-                      sx={{
-                        bgcolor: "green",
-                        borderRadius: "50%",
-                        width: 10,
-                        height: 10,
-                        position: "absolute",
-                        right: 10,
-                        top: 10,
-                      }}
-                    />
-                  )}
-                </ListItem>
-              ))
-            ) : (
-              <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
-                No users found.
-              </Typography>
-            )}
-            <ListItem button sx={{ pl: 2 }}>
-              <ListItemIcon>
-                <Add sx={{ color: "white" }} />
-              </ListItemIcon>
-              <ListItemText primary="Add Colleagues" />
-            </ListItem>
-          </List>
+        <Collapse in={openSections.dms} timeout="auto" unmountOnExit>
+          <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}> {/* Set max height and enable scrolling */}
+            <List component="div" disablePadding>
+              {usersLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 2 }}>
+                  <CircularProgress size={24} sx={{ color: 'white' }} />
+                </Box>
+              ) : Array.isArray(users) && users.length > 0 ? (
+                users.map((user, index) => (
+                    <ListItem
+                    button={true}
+                    key={`${user.id}-${index}`}
+
+                    sx={{ pl: 2 }}
+                    onClick={() => handleUserSelect(user)}
+                  >
+                    <ListItemIcon>
+                      <Avatar sx={{ width: 24, height: 24, bgcolor: getColorFromName(user.fullName) }}>
+                        {user?.fullName && user?.fullName.trim() !== ""
+                          ? user?.fullName[0]
+                          : "?"}
+                      </Avatar>
+                    </ListItemIcon>
+                    <ListItemText primary={user?.fullName && user?.fullName.trim()} />
+                    {user.isOnline && (
+                      <Box
+                        sx={{
+                          bgcolor: "green",
+                          borderRadius: "50%",
+                          width: 10,
+                          height: 10,
+                          position: "absolute",
+                          right: 10,
+                          top: 10,
+                        }}
+                      />
+                    )}
+                  </ListItem>
+                ))
+              ) : (
+                <Typography sx={{ color: "#ccc", textAlign: "center", mt: 2 }}>
+                  No users found.
+                </Typography>
+              )}
+              <ListItem button sx={{ pl: 2 }}>
+                <ListItemIcon>
+                  <Add sx={{ color: "white" }} />
+                </ListItemIcon>
+                <ListItemText primary="Add Colleagues" />
+              </ListItem>
+            </List>
+          </Box>
         </Collapse>
       </List>
-
-      {/* Display selected user's chat interface */}
-      {activeChatUserId && (
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
-            {/* Display the name of the selected user */}
-            {users.find((user) => user.id === activeChatUserId)?.fullName}
-            <Box 
-              sx={{ 
-                width: 8, 
-                height: 8, 
-                bgcolor: '#36C5F0', 
-                borderRadius: '50%', 
-                ml: 1 
-              }}
-            />
-          </Typography>
-       
-        </Box>
+      {/* Display selected channel's chat interface */}
+      {selectedChannel && (
+        <ChannelChatUI 
+          open={!!selectedChannel} 
+          onClose={handleCloseChannelChat} 
+          channel={selectedChannel} 
+        />
       )}
-
       <ChannelPopup open={openChannelPopup} handleClose={handleCloseChannelPopup} />
     </Box>
   );

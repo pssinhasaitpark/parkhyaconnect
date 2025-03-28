@@ -27,20 +27,29 @@ const ChannelPopup = ({ open, handleClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Validate channel name
+
     if (!channelName.trim()) {
       setNameError('Channel name is required');
       return;
     }
-    
+
     setLoading(true);
-    dispatch(createChannel({ name: channelName, description, isPrivate }))
+    
+    const channelData = {
+      name: channelName,
+      description,
+      isPrivate 
+    };
+    
+    dispatch(createChannel(channelData))
       .unwrap()
       .then(() => {
-        setNotification({ open: true, message: 'Channel created successfully!', severity: 'success' });
+        setNotification({ 
+          open: true, 
+          message: `${isPrivate ? 'Private' : 'Public'} channel created successfully!`, 
+          severity: 'success' 
+        });
         handleClose();
-        // Reset form
         setChannelName('');
         setDescription('');
         setIsPrivate(false);
@@ -62,7 +71,6 @@ const ChannelPopup = ({ open, handleClose }) => {
     const { name, value } = e.target;
     if (name === 'channelName') {
       setChannelName(value);
-      // Clear error when user types
       if (value.trim()) {
         setNameError('');
       }
@@ -117,26 +125,28 @@ const ChannelPopup = ({ open, handleClose }) => {
             label="Private channel"
           />
           <FormHelperText>
-            Private channels are only visible to their members
+            {isPrivate 
+              ? "Private channels are only visible to their members" 
+              : "Public channels are visible to all users"}
           </FormHelperText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="primary" disabled={loading}>
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            color="primary" 
+          <Button
+            type="submit"
+            color="primary"
             variant="contained"
             disabled={loading}
           >
-            {loading ? <CircularProgress size={24} /> : "Create"}
+            {loading ? <CircularProgress size={24} /> : `Create ${isPrivate ? 'Private' : 'Public'} Channel`}
           </Button>
         </DialogActions>
       </form>
-      <Snackbar 
-        open={notification.open} 
-        autoHideDuration={4000} 
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={4000}
         onClose={handleCloseNotification}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       >

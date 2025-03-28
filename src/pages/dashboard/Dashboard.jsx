@@ -2,14 +2,13 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import Header from "../../components/header/Header";
 import Sidebar from "../../components/sidebar/Sidebar";
-import { Box, IconButton, Typography, useTheme } from "@mui/material";
-import { Message } from "@mui/icons-material";
+import { Box, IconButton, Typography } from "@mui/material";
+// import { Message } from "@mui/icons-material";
 import DMInterface from "../../components/ChatBox/DMInterface";
 
 const Dashboard = () => {
-  const [selectedUser, setSelectedUser] = useState(null); 
-  const currentUser = useSelector((state) => state.auth.user); 
-  const theme = useTheme(); // Material UI theme for breakpoints
+  const [selectedUser, setSelectedUser] = useState(null);
+  const currentUser = useSelector((state) => state.auth.user);
 
   const handleUserSelect = (user) => {
     setSelectedUser(user);
@@ -28,31 +27,43 @@ const Dashboard = () => {
         flexGrow: 1,
         marginTop: "64px",
         height: "calc(100vh - 64px)",
-        flexDirection: { xs: "column", sm: "row" }, // Adjust layout for small screens
+        flexDirection: { xs: "column", sm: "row" },
       }}>
-        <Sidebar onUserSelect={handleUserSelect} sx={{
-          display: { xs: "none", sm: "block" }, // Hide sidebar on small screens
-          width: { sm: "20%", xs: "100%" }, // Adjust sidebar width for small screens
-          position: { sm: "fixed", xs: "relative" }, // Fix sidebar on large screens
-        }} />
+        <Sidebar
+          onUserSelect={handleUserSelect}
+          sx={{
+            display: { xs: "none", sm: "block" },
+            width: { sm: "20%", xs: "100%" },
+            position: { sm: "fixed", xs: "relative" },
+          }}
+        />
 
         {/* Chat area */}
-        <Box sx={{
-          flexGrow: 1,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          paddingLeft: { xs: 0, sm: "18%" }, // Adjust padding for small screens
-          justifyContent: "center",
-          alignItems: "center",
-          textAlign: "center",
-        }}>
+        <Box
+          sx={{
+            flexGrow: 1,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            paddingLeft: { xs: 0, sm: "18%" },
+            justifyContent: "center",
+            alignItems: "center",
+            textAlign: "center",
+          }}
+        >
+          {/* Show DMInterface only when a user is selected */}
           {selectedUser ? (
-            <DMInterface selectedUser={selectedUser} selectedChannel={null} />
+            <DMInterface
+              selectedUser={selectedUser}
+              onClose={() => setSelectedUser(null)}
+            />
           ) : (
+            // Show the default message when no user is selected
             <Box sx={{ textAlign: "center" }}>
-              <IconButton sx={{ color: "black", fontSize: 50, marginBottom: "20px" }}>
-                <Message />
+              <IconButton
+                sx={{ color: "black", fontSize: 50, marginBottom: "20px" }}
+              >
+                {/* <Message /> */}
               </IconButton>
               <Typography variant="h6" sx={{ color: "purple" }}>
                 Select a user to start chatting
@@ -60,6 +71,7 @@ const Dashboard = () => {
             </Box>
           )}
         </Box>
+
       </Box>
     </Box>
   );

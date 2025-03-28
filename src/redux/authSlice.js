@@ -12,7 +12,6 @@ const saveTokenToStorage = (token) => {
     }
     return false;
   } catch (error) {
-    console.error("Error saving token to localStorage:", error);
     return false;
   }
 };
@@ -22,7 +21,6 @@ const getTokenFromStorage = () => {
   try {
     return localStorage.getItem("token");
   } catch (error) {
-    console.error("Error retrieving token from localStorage:", error);
     return null;
   }
 };
@@ -107,19 +105,23 @@ export const fetchUsers = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      // Assuming the API response includes lastMessage, lastMessageTime, and unseenCount
       return response.data.data.users.map((user) => ({
         isOnline: user.isOnline,
         id: user.id,
         fullName: user.fullName,
         avatar: user.avatar,
         joinedAt: user.created_at,
+        lastMessage: user.lastMessage || "", // Add last message
+        lastMessageTime: user.lastMessageTime || "", // Add last message time
+        unseenCount: user.unseenCount || 0, // Add unseen message count
       }));
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch users");
     }
   }
 );
-
 export const fetchSelectedUser = createAsyncThunk(
   "auth/fetchSelectedUser",
   async (id, { rejectWithValue, getState }) => {
@@ -133,7 +135,6 @@ export const fetchSelectedUser = createAsyncThunk(
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("Response data:", response.data.data); 
 
       return response.data.data; 
     } catch (error) {
@@ -256,7 +257,6 @@ const authSlice = createSlice({
       try {
         localStorage.setItem("user", JSON.stringify(action.payload));
       } catch (error) {
-        console.error("Error saving user to localStorage:", error);
       }
     },
   },
@@ -276,7 +276,6 @@ const authSlice = createSlice({
         try {
           localStorage.setItem("user", JSON.stringify(action.payload));
         } catch (error) {
-          console.error("Error saving user to localStorage:", error);
         }
       })
       .addCase(fetchUserDetails.rejected, (state, action) => {
@@ -288,10 +287,8 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        console.log("Login API Response:", action.payload);
     
         if (!action.payload || !action.payload.token || !action.payload.user) {
-          console.error("Login API response missing user data!", action.payload);
           return;
         }
     
@@ -306,7 +303,6 @@ const authSlice = createSlice({
         try {
           localStorage.setItem("user", JSON.stringify(action.payload.user));
         } catch (error) {
-          console.error("Error saving user to localStorage:", error);
         }
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -334,7 +330,6 @@ const authSlice = createSlice({
             try {
               localStorage.setItem("user", JSON.stringify(action.payload.user));
             } catch (error) {
-              console.error("Error saving user to localStorage:", error);
             }
           }
         }

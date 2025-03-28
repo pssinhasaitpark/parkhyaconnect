@@ -28,8 +28,6 @@ const Login = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    console.log("Auth state:", { isAuthenticated, token, initDone });
-    console.log("Stored token:", localStorage.getItem("token"));
   }, [isAuthenticated, token, initDone]);
 
   const validationSchema = Yup.object({
@@ -44,7 +42,6 @@ const Login = () => {
     },
     validationSchema,
     onSubmit: async (values) => {
-      console.log("Login attempt with values:", values);
 
       try {
         const resultAction = await dispatch(loginUser({
@@ -53,16 +50,12 @@ const Login = () => {
         }));
 
         if (loginUser.fulfilled.match(resultAction)) {
-          console.log("Login response:", resultAction.payload);
           
           if (resultAction.payload && resultAction.payload.token) {
-            console.log("Token received:", resultAction.payload.token);
             
             const storedToken = localStorage.getItem("token");
-            console.log("Verification - token in localStorage:", storedToken);
             
             if (storedToken !== resultAction.payload.token) {
-              console.log("Token mismatch detected, setting manually");
               localStorage.setItem("token", resultAction.payload.token);
               
               dispatch(setToken(resultAction.payload.token));
@@ -77,11 +70,9 @@ const Login = () => {
             toast.error('No token received from server');
           }
         } else {
-          console.error("Login failed:", resultAction.payload);
           toast.error(resultAction.payload || 'Invalid email or password');
         }
       } catch (error) {
-        console.error("Login error:", error);
         toast.error(error.response?.data?.message || 'Login failed. Please try again.');
       }
     },
@@ -89,7 +80,6 @@ const Login = () => {
 
   useEffect(() => {
     if (initDone && isAuthenticated && token) {
-      console.log("Redirecting to dashboard. Token:", token);
       navigate('/dashboard');
     }
   }, [isAuthenticated, token, navigate, initDone]);
@@ -103,7 +93,6 @@ const Login = () => {
   const handleGoogleLogin = async (response) => {
     try {
       const token = response.credential;
-      console.log("Google token received:", token);
       
       localStorage.setItem('token', token);
       
