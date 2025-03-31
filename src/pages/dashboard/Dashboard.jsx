@@ -3,15 +3,22 @@ import { useSelector } from "react-redux";
 import Header from "../../components/header/Header";
 import Sidebar from "../../components/sidebar/Sidebar";
 import { Box, IconButton, Typography } from "@mui/material";
-// import { Message } from "@mui/icons-material";
 import DMInterface from "../../components/ChatBox/DMInterface";
+import ChannelChatUI from "../../components/ChatBox/ChannelChatUI"; 
 
 const Dashboard = () => {
-  const [selectedUser, setSelectedUser] = useState(null);
-  const currentUser = useSelector((state) => state.auth.user);
+  const [selectedUser , setSelectedUser ] = useState(null);
+  const [selectedChannel, setSelectedChannel] = useState(null); // State for the selected channel
+  const currentUser  = useSelector((state) => state.auth.user);
 
   const handleUserSelect = (user) => {
-    setSelectedUser(user);
+    setSelectedUser (user);
+    setSelectedChannel(null); // Close ChannelChatUI when a user is selected
+  };
+
+  const handleChannelSelect = (channel) => {
+    setSelectedChannel(channel);
+    setSelectedUser (null); // Close DMInterface when a channel is selected
   };
 
   return (
@@ -30,7 +37,12 @@ const Dashboard = () => {
         flexDirection: { xs: "column", sm: "row" },
       }}>
         <Sidebar
-          onUserSelect={handleUserSelect}
+          onUserSelect={(user) => {
+            handleUserSelect(user);
+          }}
+          onChannelSelect={(channel) => {
+            handleChannelSelect(channel);
+          }}
           sx={{
             display: { xs: "none", sm: "block" },
             width: { sm: "20%", xs: "100%" },
@@ -51,14 +63,19 @@ const Dashboard = () => {
             textAlign: "center",
           }}
         >
-          {/* Show DMInterface only when a user is selected */}
-          {selectedUser ? (
+          {/* Show DMInterface or ChannelChatUI based on the selected user or channel */}
+          {selectedUser  ? (
             <DMInterface
-              selectedUser={selectedUser}
-              onClose={() => setSelectedUser(null)}
+              selectedUser ={selectedUser }
+              onClose={() => setSelectedUser (null)} // Close DMInterface
+            />
+          ) : selectedChannel ? (
+            <ChannelChatUI
+              channel={selectedChannel}
+              onClose={() => setSelectedChannel(null)} // Close ChannelChatUI
             />
           ) : (
-            // Show the default message when no user is selected
+            // Show the default message when no user or channel is selected
             <Box sx={{ textAlign: "center" }}>
               <IconButton
                 sx={{ color: "black", fontSize: 50, marginBottom: "20px" }}
@@ -66,12 +83,11 @@ const Dashboard = () => {
                 {/* <Message /> */}
               </IconButton>
               <Typography variant="h6" sx={{ color: "purple" }}>
-                Select a user to start chatting
+                Select a user or channel to start chatting
               </Typography>
             </Box>
           )}
         </Box>
-
       </Box>
     </Box>
   );

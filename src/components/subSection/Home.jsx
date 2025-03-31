@@ -30,10 +30,26 @@ const Home = ({ onUserSelect }) => {
   const [selectedChannel, setSelectedChannel] = useState(null); // State for the selected channel
   const { users, loading: usersLoading } = useSelector((state) => state.auth);
   const { channels, loading: channelsLoading } = useSelector((state) => state.channels);
+  
+  // Local loading states
+  const [localUsersLoading, setLocalUsersLoading] = useState(false);
+  const [localChannelsLoading, setLocalChannelsLoading] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchUsers());
-    dispatch(fetchChannels());
+    const fetchData = async () => {
+      setLocalUsersLoading(true);
+      await dispatch(fetchUsers());
+      setLocalUsersLoading(false);
+    };
+
+    const fetchChannelsData = async () => {
+      setLocalChannelsLoading(true);
+      await dispatch(fetchChannels());
+      setLocalChannelsLoading(false);
+    };
+
+    fetchData();
+    fetchChannelsData();
   }, [dispatch]);
 
   const toggleSection = (section) => {
@@ -50,19 +66,19 @@ const Home = ({ onUserSelect }) => {
 
   const handleChannelSelect = (channelId, channelName) => {
     console.log(`Selected channel: ${channelName} (${channelId})`);
-    setSelectedChannel({ id: channelId, name: channelName }); // Set the selected channel
-    dispatch(fetchMessages({ channelId })); // Fetch messages for the selected channel
-    dispatch(clearMessages()); // Clear previous messages
+    setSelectedChannel({ id: channelId, name: channelName });
+    dispatch(fetchMessages({ channelId }));
+    dispatch(clearMessages());
+    setActiveChatUserId(null); // Close DMInterface
   };
-
+  
   const handleUserSelect = (user) => {
     console.log(`User  clicked: ${user.id}`);
     dispatch(fetchMessages({ userId: user.id }));
     dispatch(clearMessages());
     setActiveChatUserId(user.id);
-    onUserSelect(user);
-    // Close the channel chat if it's open
-    setSelectedChannel(null);
+    onUserSelect(user); // Call the passed function
+    setSelectedChannel(null); // Close ChannelChatUI
   };
 
   const handleCloseChannelChat = () => {
@@ -89,18 +105,17 @@ const Home = ({ onUserSelect }) => {
           {openSections.channels ? <ExpandLess /> : <ExpandMore />}
         </ListItem>
         <Collapse in={openSections.channels} timeout="auto" unmountOnExit>
-          <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}> {/* Set max height and enable scrolling */}
+          <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}>
             <List component="div" disablePadding>
-              {channelsLoading ? (
+              {localChannelsLoading ? ( // Use local loading state
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 2 }}>
                   <CircularProgress size={24} sx={{ color: 'white' }} />
                 </Box>
               ) : channels && channels.length > 0 ? (
                 channels.map((channel, index) => (
-                    <ListItem
+                  <ListItem
                     button={true}
                     key={`${channel.id}-${index}`}
-
                     sx={{ pl: 2 }}
                     onClick={() => handleChannelSelect(channel.id, channel.name)}
                   >
@@ -133,18 +148,17 @@ const Home = ({ onUserSelect }) => {
           {openSections.dms ? <ExpandLess /> : <ExpandMore />}
         </ListItem>
         <Collapse in={openSections.dms} timeout="auto" unmountOnExit>
-          <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}> {/* Set max height and enable scrolling */}
+          <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}>
             <List component="div" disablePadding>
-              {usersLoading ? (
+              {localUsersLoading ? ( // Use local loading state
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 2 }}>
                   <CircularProgress size={24} sx={{ color: 'white' }} />
                 </Box>
               ) : Array.isArray(users) && users.length > 0 ? (
                 users.map((user, index) => (
-                    <ListItem
+                  <ListItem
                     button={true}
                     key={`${user.id}-${index}`}
-
                     sx={{ pl: 2 }}
                     onClick={() => handleUserSelect(user)}
                   >

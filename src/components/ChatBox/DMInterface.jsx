@@ -311,13 +311,14 @@ const DMInterface = ({ selectedUser  , onClose }) => {
 
   const handleSeenMessages = useCallback((messageId) => {
     if (messageId && currentUser  && selectedUser  && messageId !== currentUser .id) {
+      console.log(`Marking message ${messageId} as seen`);
       dispatch(markMessageAsSeen(messageId));
     }
   }, [dispatch, currentUser , selectedUser ]);
 
   const handleClearNotifications = () => {
     if (selectedUser ) {
-      setUnreadMessages(0); // Reset unread messages count
+      setUnreadMessages(0);
       dispatch(markAllMessagesSeen(selectedUser .id));
     }
   };

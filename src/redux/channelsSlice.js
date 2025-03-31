@@ -3,7 +3,6 @@ import axios from "axios";
 
 const API_BASE_URL = "http://192.168.0.152:8000/api";
 
-// Initial state
 const initialState = {
   channels: [],
   currentChannel: null,
@@ -12,12 +11,10 @@ const initialState = {
   availableUsers: [],
 };
 
-// Centralized error handling
 const handleError = (error) => {
   return error.response?.data?.message || "An error occurred";
 };
 
-// Fetch Channels Thunk
 export const fetchChannels = createAsyncThunk(
   "channels/fetchChannels",
   async (_, { rejectWithValue }) => {
@@ -26,7 +23,7 @@ export const fetchChannels = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/channels`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.data || []; // Ensure it returns an array
+      return response.data.data || []; 
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
@@ -45,14 +42,13 @@ export const fetchChannelDetails = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      return response.data.data || {}; // Ensure it returns an object
+      return response.data.data || {}; 
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
   }
 );
 
-// Create Channel Thunk
 export const createChannel = createAsyncThunk(
   "channels/createChannel",
   async (channelData, { rejectWithValue }) => {
@@ -65,14 +61,13 @@ export const createChannel = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      return response.data.data || {}; // Ensure it returns an object
+      return response.data.data || {}; 
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
   }
 );
 
-// Fetch Available Users for Adding to Channel
 export const fetchAvailableUsers = createAsyncThunk(
   "channels/fetchAvailableUsers",
   async (_, { rejectWithValue }) => {
@@ -94,14 +89,13 @@ export const fetchAvailableUsers = createAsyncThunk(
         page++;
       }
 
-      return allUsers; // Return all users
+      return allUsers; 
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
   }
 );
 
-// Add Member to Channel Thunk
 export const addMemberToChannel = createAsyncThunk(
   "channels/addMemberToChannel",
   async ({ channelId, userId }, { rejectWithValue }) => {
@@ -114,7 +108,7 @@ export const addMemberToChannel = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      return { channelId, member: response.data.data || {} }; // Ensure it returns an object
+      return { channelId, member: response.data.data || {} }; 
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
@@ -231,11 +225,11 @@ const channelsSlice = createSlice({
       })
       .addCase(fetchAvailableUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.availableUsers = action.payload; // Set available users
+        state.availableUsers = action.payload; 
       })
       .addCase(fetchAvailableUsers.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload; // Set error message
+        state.error = action.payload; 
       })
 
       // Add Member to Channel Cases
@@ -251,7 +245,7 @@ const channelsSlice = createSlice({
         if (channelIndex !== -1) {
           const channel = state.channels[channelIndex];
           if (!channel.members) {
-            channel.members = []; // Initialize members array if it doesn't exist
+            channel.members = []; 
           }
           if (
             !channel.members.some(
@@ -278,10 +272,10 @@ const channelsSlice = createSlice({
           (channel) => channel.id === action.payload.channelId
         );
         if (channelIndex !== -1) {
-          state.channels[channelIndex].messages = action.payload.messages; // Set messages for the channel
+          state.channels[channelIndex].messages = action.payload.messages; 
         }
         if (state.currentChannel?.id === action.payload.channelId) {
-          state.currentChannel.messages = action.payload.messages; // Set messages for the current channel
+          state.currentChannel.messages = action.payload.messages; 
         }
       })
       .addCase(fetchChannelMessages.rejected, (state, action) => {
@@ -301,20 +295,20 @@ const channelsSlice = createSlice({
         );
         if (channelIndex !== -1) {
           if (!state.channels[channelIndex].messages) {
-            state.channels[channelIndex].messages = []; // Initialize messages array if it doesn't exist
+            state.channels[channelIndex].messages = []; 
           }
-          state.channels[channelIndex].messages.push(action.payload.message); // Add new message
+          state.channels[channelIndex].messages.push(action.payload.message);
         }
         if (state.currentChannel?.id === action.payload.channelId) {
           if (!state.currentChannel.messages) {
-            state.currentChannel.messages = []; // Initialize messages array if it doesn't exist
+            state.currentChannel.messages = []; 
           }
-          state.currentChannel.messages.push(action.payload.message); // Add new message to current channel
+          state.currentChannel.messages.push(action.payload.message);
         }
       })
       .addCase(sendChannelMessage.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload; // Set error message
+        state.error = action.payload; 
       });
   },
 });
