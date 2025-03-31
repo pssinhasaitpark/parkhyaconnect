@@ -40,7 +40,7 @@ const DMs = () => {
 
   const handleUserSelect = async (user) => {
     const searchParams = new URLSearchParams();
-    searchParams.set("userId", user.id); 
+    searchParams.set("userId", user.id);
     navigate({
       pathname: window.location.pathname,
       search: searchParams.toString(),
@@ -175,22 +175,22 @@ const DMs = () => {
       </Box>
       {/* Right side for DM interface */}
       <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          position: selectedUser  ? "fixed" : "relative",
-          transform: selectedUser  ? "translateX(0)" : "translateX(100%)",
-          width: "calc(100% - 420px)",
-          bgcolor: "#1E1E1E",
-          zIndex: selectedUser  ? 1 : 0,
-          right: 0,
-          top: 50,
-          height: "95%",
-          pt:1,
-        }}
-      >
-        {selectedUser  && <DMInterface selectedUser ={selectedUser } onClose={handleCloseDMInterface} />}
-      </Box>
+  sx={{
+    flex: 1,
+    display: "flex",
+    position: selectedUser  ? "fixed" : "relative",
+    transform: selectedUser  ? "translateX(0)" : "translateX(100%)",
+    width: "calc(100% - 420px)",
+    bgcolor: "#1E1E1E",
+    zIndex: selectedUser  ? 1 : 0,
+    right: 0,
+    top: 50,
+    height: "95%",
+    pt: 1,
+  }}
+>
+  {selectedUser  && <DMInterface selectedUser ={selectedUser } onClose={handleCloseDMInterface} />}
+</Box>
     </Box>
   );
 };

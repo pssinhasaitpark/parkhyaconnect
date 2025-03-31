@@ -69,9 +69,8 @@ export const markMessageAsSeen = createAsyncThunk(
   async (messageId, { rejectWithValue }) => {
     try {
       const token = getToken();
-      const response = await axios.put(
-        `${API_BASE_URL}/messages/seen/${messageId}`,
-        {},
+      const response = await axios.get(
+        `${API_BASE_URL}/messages/seen/${messageId}`, // Using GET as per your API
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -80,7 +79,7 @@ export const markMessageAsSeen = createAsyncThunk(
       return { 
         id: messageId,
         seen: true,
-        ...response.data
+        seenBy: response.data.seenBy || [] // Assuming response.data contains the list of users who have seen the message
       };
     } catch (error) {
       return rejectWithValue(
@@ -105,9 +104,8 @@ export const markAllMessagesSeen = createAsyncThunk(
       const results = await Promise.allSettled(
         unreadMessages.map(async (msg) => {
           try {
-            const response = await axios.put(
+            const response = await axios.get(
               `${API_BASE_URL}/messages/seen/${msg.id}`, 
-              {},
               {
                 headers: { Authorization: `Bearer ${token}` },
               }
@@ -240,21 +238,13 @@ const messagesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(markMessageAsSeen.pending, (state, action) => {
-        const messageId = action.meta.arg;
-        const messageIndex = state.messages.findIndex(msg => msg.id === messageId);
-        if (messageIndex !== -1) {
-          state.messages[messageIndex].seen = true;
-        }
-      })
       .addCase(markMessageAsSeen.fulfilled, (state, action) => {
-        const { id } = action.payload;
+        const { id, seenBy } = action.payload;
         const messageIndex = state.messages.findIndex(msg => msg.id === id);
         if (messageIndex !== -1) {
-          state.messages[messageIndex].seen = true;
+          state.messages[messageIndex].seen = true; // Update the seen status
+          state.messages[messageIndex].seenBy = seenBy; // Store the users who have seen the message
         }
-      })
-      .addCase(markMessageAsSeen.rejected, (state, action) => {
       })
       .addCase(markAllMessagesSeen.fulfilled, (state, action) => {
         const messageIds = action.payload;
@@ -296,6 +286,7 @@ const messagesSlice = createSlice({
         state.messages = state.messages.filter(msg => msg.id !== messageId);
       })
       .addCase(deleteMessage.rejected, (state, action) => {
+        // Handle the error if needed
       })
       .addCase(updateMessageThunk.pending, (state) => {
         state.loading = true;
